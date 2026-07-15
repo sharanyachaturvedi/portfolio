@@ -32,7 +32,10 @@
   <!-- reveal animations only hide content when JS is running; without JS everything stays visible -->
   <script>document.documentElement.classList.add('js');</script>
   <style>
-    body { background-color: #0a0a0e; -webkit-font-smoothing: antialiased; font-family: 'Inter', Arial, sans-serif; }
+    body { background-color: #0a0a0e; -webkit-font-smoothing: antialiased; font-family: 'Inter', Arial, sans-serif; overflow-x: hidden; overflow-x: clip; }
+    html { overflow-x: hidden; overflow-x: clip; }
+    /* reveal-animation hidden states (translateX) must never widen the mobile layout viewport */
+    section, footer { overflow-x: clip; }
     h1, h2, h3, h4 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; }
     ::selection { background: #F59E0B; color: #000; }
 

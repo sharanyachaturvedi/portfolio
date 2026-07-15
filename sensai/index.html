@@ -32,7 +32,10 @@
   <!-- reveal animations only hide content when JS is running; without JS everything stays visible -->
   <script>document.documentElement.classList.add('js');</script>
   <style>
-    body { background-color: #0a0a0e; -webkit-font-smoothing: antialiased; font-family: 'Inter', Arial, sans-serif; }
+    body { background-color: #0a0a0e; -webkit-font-smoothing: antialiased; font-family: 'Inter', Arial, sans-serif; overflow-x: hidden; overflow-x: clip; }
+    html { overflow-x: hidden; overflow-x: clip; }
+    /* reveal-animation hidden states (translateX/rotateX) must never widen the mobile layout viewport */
+    section, footer { overflow-x: clip; }
     h1, h2, h3, h4 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; }
     ::selection { background: #60A5FA; color: #000; }
 
@@ -453,7 +456,7 @@
 
     <!-- ── AI WIN 1: Sleep Score ── -->
     <div class="bg-[#0e0e1a] border border-[#60A5FA]/15 rounded-2xl p-4 md:p-8 mb-10" data-reveal="fade-up" style="box-shadow:0 0 60px rgba(96,165,250,0.05)">
-    <div class="grid grid-cols-2 gap-4 md:gap-10 items-center">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 items-center">
       <!-- Mock UI -->
       <div data-reveal="from-left">
         <div class="bg-[#0a0a0e] border border-[#60A5FA]/20 rounded-2xl p-4 md:p-8" style="box-shadow:0 0 60px rgba(96,165,250,0.06)">
@@ -540,7 +543,7 @@
 
     <!-- ── AI WIN 2: GenAI Coach ── -->
     <div class="bg-[#0e0e1a] border border-[#A78BFA]/15 rounded-2xl p-4 md:p-8 mb-10" data-reveal="fade-up" style="box-shadow:0 0 60px rgba(167,139,250,0.05)">
-    <div class="grid grid-cols-2 gap-4 md:gap-10 items-center">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 items-center">
       <!-- Text (right col on desktop, first on mobile) -->
       <div data-reveal="from-right" class="order-2">
         <div class="inline-block px-3 py-1.5 rounded-full border border-[#A78BFA]/30 bg-[#A78BFA]/5 mb-6">
@@ -626,8 +629,8 @@
 
     <!-- ── AI WIN 3: A/B testing & iteration ── -->
     <div class="bg-[#0e0e1a] border border-[#1EE9B6]/15 rounded-2xl p-4 md:p-10" data-reveal="flip" style="box-shadow:0 0 60px rgba(30,233,182,0.05)">
-      <div class="grid grid-cols-2 gap-4 md:gap-10 items-center">
-        <div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 items-center">
+        <div class="order-2 md:order-1">
           <div class="inline-block px-3 py-1.5 rounded-full border border-[#1EE9B6]/30 bg-[#1EE9B6]/5 mb-6">
             <span class="text-[10px] font-bold text-[#1EE9B6] tracking-widest uppercase">PM Win #3 · Experimentation</span>
           </div>
@@ -651,7 +654,7 @@
           </div>
         </div>
         <!-- A/B visual -->
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4 order-1 md:order-2">
           <div class="bg-white/[0.03] border border-red-500/20 rounded-xl p-5 text-center">
             <p class="text-[9px] font-bold text-red-400 uppercase tracking-wider mb-4">Version A</p>
             <div class="w-16 h-16 rounded-full border-4 border-gray-700 flex items-center justify-center mx-auto mb-4">
@@ -743,13 +746,13 @@
     <!-- Next case study -->
     <div class="border-t border-white/[0.06] pt-10" data-reveal="fade-up" data-delay="3">
       <p class="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-600 mb-6">Next case study</p>
-      <a href="/technician-platform/" class="group inline-flex flex-col items-center gap-2 hover:text-[#1EE9B6] transition-colors">
-        <div class="inline-block px-4 py-2 rounded-full border border-[#1EE9B6]/30 bg-[#1EE9B6]/5 group-hover:bg-[#1EE9B6]/10 transition-colors">
-          <span class="text-[11px] font-bold text-[#1EE9B6] tracking-wider uppercase">Field Ops · iOS & Android + Web</span>
+      <a href="/tsc-os/" class="group inline-flex flex-col items-center gap-2 hover:text-[#F59E0B] transition-colors">
+        <div class="inline-block px-4 py-2 rounded-full border border-[#F59E0B]/30 bg-[#F59E0B]/5 group-hover:bg-[#F59E0B]/10 transition-colors">
+          <span class="text-[11px] font-bold text-[#F59E0B] tracking-wider uppercase">Platform · OMS · POS · Comms</span>
         </div>
-        <p class="text-2xl md:text-3xl text-gray-100 group-hover:text-[#1EE9B6] transition-colors"
-           style="font-family:'Instrument Serif',Georgia,serif">Technician Platform →</p>
-        <p class="text-sm text-gray-500">1,50,000+ field operations on a platform I built from scratch</p>
+        <p class="text-2xl md:text-3xl text-gray-100 group-hover:text-[#F59E0B] transition-colors"
+           style="font-family:'Instrument Serif',Georgia,serif">The Sleep Company OS →</p>
+        <p class="text-sm text-gray-500">Opening the operational black box of a D2C sleep brand</p>
       </a>
     </div>
   </div>
