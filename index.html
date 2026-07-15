@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  SHARANYA CHATURVEDI — Portfolio (index.html)               ║
+  ║  Single-page portfolio. All sections live in this one file. ║
+  ║                                                              ║
+  ║  PAGE MAP (in order):                                        ║
+  ║    1.  NAV             — sticky top bar + logo               ║
+  ║    2.  HERO            — headline, badges, photo             ║
+  ║    3.  CREDIBILITY     — company logo strip                  ║
+  ║    4.  WORK            — case study slider + fellowship cards ║
+  ║    5.  CAPABILITIES    — 6-item skills grid                  ║
+  ║    6.  IMPACT NUMBERS  — 5 stat cards with count-up          ║
+  ║    7.  TESTIMONIALS    — 2 quotes                            ║
+  ║    8.  WRITING         — 3 LinkedIn post cards               ║
+  ║    9.  ABOUT           — bio + photo                         ║
+  ║    10. CTA             — contact call-to-action              ║
+  ║    11. FOOTER          — links                               ║
+  ║                                                              ║
+  ║  FONTS:                                                      ║
+  ║    • Inter           — body / UI text (Google Fonts)         ║
+  ║    • Instrument Serif — headings (Google Fonts)              ║
+  ║    • Peace Sans      — logo only (self-hosted, see below)    ║
+  ║                                                              ║
+  ║  ACCENT COLOURS (one per section):                           ║
+  ║    Hero / CTA      #FF6B9D  pink                             ║
+  ║    Work (teal)     #1EE9B6  teal                             ║
+  ║    Work (purple)   #962EFF  purple                           ║
+  ║    Work (blue)     #60A5FA  blue                             ║
+  ║    Work (amber)    #F59E0B  amber                            ║
+  ║    Capabilities    #962EFF  purple                           ║
+  ║    Testimonials    #34D399  emerald                          ║
+  ║    Writing         #60A5FA  blue                             ║
+  ║    About           #F97316  orange                           ║
+  ║                                                              ║
+  ║  TODO items are marked  ✏ TODO  throughout the file.         ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sharanya Chaturvedi — Product Manager</title>
+  <!-- Tailwind via CDN — fine for static portfolio; swap for a build step if the site grows -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    /* Extend Tailwind with the two brand colours so you can write
+       bg-brand / text-purple anywhere in the markup */
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { brand: '#1EE9B6', purple: '#962EFF' },
+          fontFamily: {
+            sans: ['Inter', 'Arial', 'sans-serif'],
+            serif: ['Instrument Serif', 'Georgia', 'serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter (UI) + Instrument Serif (headings) -->
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!--
+    Peace Sans (logo only) — not on Google Fonts, must be self-hosted.
+    ✏ TODO: drop PeaceSans.woff2 + PeaceSans.woff into assets/fonts/
+            then uncomment the @font-face block below.
+  -->
+  <!-- <style>
+    @font-face {
+      font-family: 'Peace Sans';
+      src: url('assets/fonts/PeaceSans.woff2') format('woff2'),
+           url('assets/fonts/PeaceSans.woff') format('woff');
+      font-weight: normal; font-style: normal;
+    }
+  </style> -->
+  <!-- reveal animations only hide content when JS is running; without JS everything stays visible -->
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    body { background-color: #0a0a0e; -webkit-font-smoothing: antialiased; font-family: 'Inter', Arial, sans-serif; }
+    h1, h2, h3 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; }
+    ::selection { background: #FF6B9D; color: #fff; }
+
+    /* ── SLIDER ── */
+    .slider-track {
+      display: flex; gap: 1.5rem; overflow-x: auto;
+      scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+      padding-bottom: 1.5rem; cursor: grab;
+    }
+    .slider-track:active { cursor: grabbing; }
+    .slider-track::-webkit-scrollbar { height: 4px; }
+    .slider-track::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 2px; }
+    .slider-track::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+    .slider-card { flex: 0 0 380px; scroll-snap-align: start; }
+    @media (max-width: 640px) { .slider-card { flex: 0 0 calc(100vw - 3rem); } }
+
+
+    /* ════════════════════════════════════════
+       HERO LOAD ANIMATIONS (page open)
+    ════════════════════════════════════════ */
+    .hero-up {
+      opacity: 0;
+      animation: heroUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .hero-photo {
+      opacity: 0;
+      animation: heroPhoto 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes heroUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes heroPhoto {
+      from { opacity: 0; transform: translateX(40px) scale(0.96); }
+      to   { opacity: 1; transform: none; }
+    }
+
+
+    /* ════════════════════════════════════════
+       SCROLL REVEAL — 5 distinct types
+       (hidden states scoped to .js so nothing
+        stays invisible if JS is off or fails)
+    ════════════════════════════════════════ */
+
+    /* 1. FADE-UP — gentle, for body copy only */
+    .js [data-reveal="fade-up"] {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease,
+                  transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 2. SPRING POP — scales in and snaps back past target, then settles */
+    .js [data-reveal="spring"] {
+      opacity: 0;
+      transform: scale(0.78) translateY(24px);
+      transition: opacity 0.45s ease,
+                  transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 3. BLUR REVEAL — materialises from fog */
+    .js [data-reveal="blur"] {
+      opacity: 0;
+      filter: blur(14px) saturate(0);
+      transform: translateY(12px) scale(0.98);
+      transition: opacity 0.9s ease,
+                  filter 0.9s ease,
+                  transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 4a. FROM-RIGHT — slides in from right */
+    .js [data-reveal="from-right"] {
+      opacity: 0;
+      transform: translateX(56px);
+      transition: opacity 0.75s ease,
+                  transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 4b. FROM-LEFT — slides in from left */
+    .js [data-reveal="from-left"] {
+      opacity: 0;
+      transform: translateX(-56px);
+      transition: opacity 0.75s ease,
+                  transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 5. FLIP — 3-D card flip on X axis */
+    .js [data-reveal="flip"] {
+      opacity: 0;
+      transform: perspective(700px) rotateX(30deg) translateY(32px);
+      transform-origin: top center;
+      transition: opacity 0.6s ease,
+                  transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ── REVEALED STATE (same for every type) ── */
+    .js [data-reveal].in {
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+
+    /*
+      STAGGER DELAYS
+      Add data-delay="1" … "6" alongside data-reveal to stagger siblings.
+      Example: <div data-reveal="spring" data-delay="2"> fires 160ms late.
+    */
+    [data-delay="1"] { transition-delay: 80ms;  }
+    [data-delay="2"] { transition-delay: 160ms; }
+    [data-delay="3"] { transition-delay: 240ms; }
+    [data-delay="4"] { transition-delay: 320ms; }
+    [data-delay="5"] { transition-delay: 400ms; }
+    [data-delay="6"] { transition-delay: 480ms; }
+
+    /* ── MOBILE MENU ── */
+    #mobile-menu { display: none; }
+    #mobile-menu.open { display: flex; }
+    #hamburger .hline { display: block; width: 20px; height: 2px; background: white; border-radius: 2px; transition: all 0.25s ease; }
+    #hamburger.open .hline:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    #hamburger.open .hline:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    #hamburger.open .hline:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ── TESTIMONIAL CAROUSEL ── */
+    .testimonial-track { display: flex; transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; }
+    .testimonial-slide { flex-shrink: 0; width: 100%; }
+    .t-dot { height: 6px; border-radius: 9999px; cursor: pointer; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); background: rgba(255,255,255,0.2); }
+    .t-dot.active { background: #34D399; }
+
+    /* ── CURSOR GLOW ── */
+    #cursor-glow {
+      position: fixed;
+      left: 0; top: 0;
+      pointer-events: none;
+      z-index: 9999;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      mix-blend-mode: screen;
+      transition: background 0.75s ease;
+      background: radial-gradient(circle, rgba(255,107,157,0.09) 0%, transparent 70%);
+      will-change: transform;
+      transform: translate(-9999px, -9999px);
+    }
+
+    /* ── SLIDER ARROWS ── */
+    .slider-btn {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: #9ca3af;
+      transition: all 0.2s ease; flex-shrink: 0;
+    }
+    .slider-btn:hover { border-color: rgba(255,255,255,0.35); color: #e5e7eb; background: rgba(255,255,255,0.08); }
+    .slider-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* ── 3D TILT (work cards) ── */
+    .tilt-card {
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    /* ── DM MODAL ── */
+    #dm-overlay { position:fixed; inset:0; z-index:90; background:rgba(6,6,10,0.8); backdrop-filter:blur(12px); display:none; align-items:center; justify-content:center; padding:16px; }
+    #dm-overlay.open { display:flex; }
+    #dm-modal { width:min(500px, 100%); max-height:96vh; overflow-y:auto; scrollbar-width:none; background:linear-gradient(180deg,#12121f 0%,#0e0e1a 100%); border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:26px 28px 24px; position:relative; box-shadow:0 24px 80px rgba(0,0,0,0.65), 0 0 80px rgba(255,107,157,0.07); animation:dmIn .35s cubic-bezier(0.16,1,0.3,1); }
+    #dm-modal::-webkit-scrollbar { display:none; }
+    #dm-modal::before { content:''; position:absolute; top:0; left:0; right:0; height:130px; background:radial-gradient(ellipse 75% 100% at 50% 0%, rgba(255,107,157,0.12) 0%, transparent 70%); pointer-events:none; border-radius:24px 24px 0 0; }
+    @keyframes dmIn { from { opacity:0; transform:translateY(24px) scale(0.97); } to { opacity:1; transform:none; } }
+    .dm-input { width:100%; background:rgba(10,10,14,0.8); border:1px solid rgba(255,255,255,0.1); border-radius:11px; padding:10px 13px; font-size:13px; color:#e5e7eb; outline:none; transition:border-color .2s, box-shadow .2s; }
+    .dm-input:focus { border-color:rgba(255,107,157,0.55); box-shadow:0 0 0 3px rgba(255,107,157,0.08); }
+    .dm-input::placeholder { color:#4b5563; }
+    select.dm-input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 13px center; padding-right:36px; cursor:pointer; }
+    select.dm-input option { background:#0e0e1a; color:#e5e7eb; }
+    .dm-label { display:block; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6b7280; margin-bottom:5px; }
+    .dm-tabs { display:flex; gap:4px; background:rgba(10,10,14,0.8); border:1px solid rgba(255,255,255,0.08); border-radius:9999px; padding:4px; position:relative; }
+    .dm-tab { flex:1; padding:9px 8px; border-radius:9999px; border:none; background:transparent; color:#8b93a1; font-size:12px; font-weight:700; cursor:pointer; transition:all .25s; }
+    .dm-tab.on { background:linear-gradient(135deg, rgba(255,107,157,0.18), rgba(150,46,255,0.14)); color:#FF6B9D; box-shadow:inset 0 0 0 1px rgba(255,107,157,0.35); }
+    .dm-alt { font-size:11px; color:#6b7280; text-align:center; margin-top:12px; }
+    .dm-alt a { color:#9ca3af; text-decoration:underline; text-decoration-color:rgba(255,255,255,0.2); text-underline-offset:2px; transition:color .2s; }
+    .dm-alt a:hover { color:#FF6B9D; }
+  </style>
+
+  <!-- ══ ANALYTICS — uncomment after creating the accounts (see instructions from Claude) ══
+       1) Google Analytics 4: analytics.google.com → create property → copy the "G-XXXXXXXXXX" Measurement ID here.
+          GA4's Enhanced Measurement gives you: visitors, avg engagement time, traffic sources, and 90% scroll-depth events out of the box.
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
+       2) Microsoft Clarity (free): clarity.microsoft.com → new project → copy the project ID here.
+          Gives you scroll-depth heatmaps per section + session recordings — watch exactly where visitors stop reading.
+  <script>
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "XXXXXXXXXX");
+  </script>
+  ══ END ANALYTICS ══ -->
+</head>
+<body class="text-white font-sans">
+<div id="cursor-glow"></div>
+
+<!-- SCROLL PROGRESS -->
+<div class="fixed top-0 left-0 w-full h-0.5 z-[60] pointer-events-none">
+  <div id="scroll-progress" class="h-full" style="transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,#1EE9B6,#60A5FA,#962EFF,#F59E0B)"></div>
+</div>
+
+<!-- ─────────────────────────────────────────
+     NAV — sticky, blurred dark bar
+     Logo: Peace Sans wordmark (self-hosted font).
+     Links: scroll to anchors #work #writing #about #contact.
+     CTA button: mailto link (same as hero + footer).
+───────────────────────────────────────── -->
+<nav class="sticky top-0 z-40 border-b border-white/[0.07] bg-[#0a0a0e]/92 backdrop-blur-xl">
+  <div class="max-w-7xl mx-auto px-6 h-[62px] flex items-center justify-between gap-4">
+    <a href="/" class="flex-shrink-0">
+      <div style="font-family:'Peace Sans',sans-serif; line-height:0.92; color:#f3f4f6; font-size:17px; font-weight:400; text-align:left; letter-spacing:0.01em;">
+        <span style="display:block">Sharanya</span>
+        <span style="display:block">Chaturvedi</span>
+      </div>
+    </a>
+    <div class="hidden lg:flex items-center gap-8">
+      <a href="#work"    class="text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">Work</a>
+      <a href="#writing" class="text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">Writing</a>
+      <a href="#about"   class="text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">About</a>
+      <a href="#contact" class="text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">Contact</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="mailto:chaturvedisharanya@gmail.com" class="flex-shrink-0 bg-white text-black text-[13px] font-bold px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">Let's talk →</a>
+      <button id="hamburger" class="lg:hidden flex flex-col justify-center items-center gap-[5px] w-9 h-9 rounded-lg hover:bg-white/5 transition-colors" aria-label="Open menu">
+        <span class="hline"></span>
+        <span class="hline"></span>
+        <span class="hline"></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile full-screen menu -->
+<div id="mobile-menu" class="fixed inset-0 z-50 bg-[#0a0a0e] flex-col items-center justify-center gap-8">
+  <button id="mobile-close" class="absolute top-5 right-6 text-gray-400 hover:text-white text-xl transition-colors" aria-label="Close menu">✕</button>
+  <a href="#work"    onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-[#1EE9B6] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">Work</a>
+  <a href="#writing" onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-[#60A5FA] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">Writing</a>
+  <a href="#about"   onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-[#F97316] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">About</a>
+  <a href="#contact" onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-[#FF6B9D] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">Contact</a>
+  <a href="mailto:chaturvedisharanya@gmail.com" class="mt-6 bg-white text-black text-[14px] font-bold px-7 py-3.5 rounded-xl hover:bg-gray-100 transition-colors">Let's talk →</a>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     HERO  ·  load animations on page open
+════════════════════════════════════════════ -->
+<section id="hero" class="relative overflow-hidden" style="background:radial-gradient(ellipse 70% 60% at 65% 50%,rgba(255,107,157,0.08) 0%,transparent 65%),#0a0a0e">
+  <div class="max-w-7xl mx-auto px-6 py-16 md:py-24 flex flex-col md:flex-row items-center gap-10 md:gap-16">
+
+    <div class="flex-1 min-w-0 w-full">
+      <h1 class="hero-up text-5xl md:text-6xl lg:text-[72px] leading-[1.06] tracking-[-1px] mb-6 text-gray-100"
+          style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;animation-delay:0ms">
+        Product Manager.<br>I build things that<br>
+        <em style="font-style:italic;color:#FF6B9D">ship, scale, and matter.</em>
+      </h1>
+      <p class="hero-up text-base md:text-[17px] text-gray-400 mb-8 leading-relaxed max-w-[480px]"
+         style="animation-delay:130ms">
+        4 years building AI products and platforms from 0→1. I've taken ideas from a napkin to live products with real revenue — across B2B SaaS, D2C, and HealthTech.
+      </p>
+      <div class="hero-up flex flex-wrap gap-2 md:gap-3 mb-10" style="animation-delay:220ms">
+        <div class="px-3 py-2 rounded-full border border-[#FF6B9D]/30 bg-[#FF6B9D]/5">
+          <span class="text-[11px] font-bold text-[#FF6B9D] tracking-wider uppercase">4 live AI products shipped</span>
+        </div>
+        <div class="px-3 py-2 rounded-full border border-[#FF6B9D]/30 bg-[#FF6B9D]/5">
+          <span class="text-[11px] font-bold text-[#FF6B9D] tracking-wider uppercase">₹110Cr+ GMV processed</span>
+        </div>
+        <div class="px-3 py-2 rounded-full border border-[#FF6B9D]/30 bg-[#FF6B9D]/5">
+          <span class="text-[11px] font-bold text-[#FF6B9D] tracking-wider uppercase">1,50,000+ operations managed</span>
+        </div>
+      </div>
+      <div class="hero-up flex flex-col sm:flex-row gap-3" style="animation-delay:310ms">
+        <a href="mailto:chaturvedisharanya@gmail.com" class="inline-flex items-center justify-center gap-2 bg-white text-black text-[14px] font-bold px-5 py-3 rounded-xl hover:bg-gray-100 transition-colors">Let's talk →</a>
+        <a href="#work" class="inline-flex items-center justify-center gap-2 text-[14px] font-semibold text-gray-300 px-5 py-3 rounded-xl border border-white/20 hover:border-white/40 hover:text-gray-100 transition-all">See my work</a>
+      </div>
+    </div>
+
+    <div class="hero-photo flex-shrink-0 w-full md:w-[380px] lg:w-[420px]" style="animation-delay:180ms">
+      <div class="rounded-2xl border border-white/[0.08] overflow-hidden shadow-[0_30px_80px_rgba(255,107,157,0.1)] aspect-[4/5]">
+        <img src="assets/images/sharanya.jpg" alt="Sharanya Chaturvedi" class="w-full h-full object-cover object-center" />
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     CREDIBILITY STRIP  ·  BLUR REVEAL
+     logos materialise from fog, staggered
+════════════════════════════════════════════ -->
+<div id="credibility" class="border-t border-b border-white/[0.06] bg-[#0c0c12] py-10 px-6">
+  <div class="max-w-7xl mx-auto">
+    <p class="text-center text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-600 mb-8"
+       data-reveal="blur">Loved by teams at</p>
+    <div class="flex items-center justify-center gap-8 md:gap-12 flex-wrap">
+
+      <div class="flex items-center gap-2 opacity-30 hover:opacity-60 transition-opacity" data-reveal="blur" data-delay="1">
+        <img src="assets/images/sleep-company-logo.png" alt="The Sleep Company" class="h-6 w-auto max-w-[28px] object-contain" style="filter:brightness(0) invert(1)" />
+        <span class="text-[13px] font-black text-white tracking-tight">THE SLEEP COMPANY</span>
+      </div>
+
+      <div class="flex items-center gap-2 opacity-30 hover:opacity-60 transition-opacity" data-reveal="blur" data-delay="2">
+        <img src="assets/images/medikabazaar-logo.png" alt="Medikabazaar" class="h-6 w-auto max-w-[28px] object-contain" />
+        <span class="text-[13px] font-black text-white tracking-tight">MEDIKABAZAAR</span>
+      </div>
+
+      <div class="flex items-center gap-2 opacity-30 hover:opacity-60 transition-opacity" data-reveal="blur" data-delay="3">
+        <img src="assets/images/data-sutram-logo.png" alt="Data Sutram" class="h-6 w-auto max-w-[28px] object-contain" style="filter:brightness(0) invert(1)" />
+        <span class="text-[13px] font-black text-white tracking-tight">DATA SUTRAM</span>
+      </div>
+
+      <div class="flex items-center gap-2 opacity-30 hover:opacity-60 transition-opacity" data-reveal="blur" data-delay="4">
+        <img src="assets/images/growthx-logo.png" alt="GrowthX" class="h-6 w-auto max-w-[28px] object-contain" />
+        <span class="text-[13px] font-black text-white tracking-tight">GROWTHX</span>
+      </div>
+
+      <div class="flex items-center gap-2 opacity-30 hover:opacity-60 transition-opacity" data-reveal="blur" data-delay="5">
+        <img src="assets/images/nextleap-logo.png" alt="NextLeap" class="h-6 w-auto max-w-[28px] object-contain" />
+        <span class="text-[13px] font-black text-white tracking-tight">NEXTLEAP</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     WORK  ·  heading: CLIP WIPE
+             cards slider: SPRING POP
+             fellowship cards: 3-D FLIP
+════════════════════════════════════════════ -->
+<section class="pt-10 pb-20 px-6 bg-[#0a0a0e]" id="work">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+      <div>
+        <!-- CLIP WIPE on heading -->
+        <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-2 text-gray-100"
+            style="font-family:'Instrument Serif',Georgia,serif;font-weight:400"
+           >Things I've built</h2>
+        <p class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] text-gray-400 mt-1" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-style:italic" data-reveal="fade-up" data-delay="1">From problem discovery to live products with real business impact.</p>
+      </div>
+      <a href="mailto:chaturvedisharanya@gmail.com"
+         class="flex-shrink-0 text-[13px] font-semibold text-gray-400 px-4 py-2 rounded-lg border border-white/15 hover:border-white/30 hover:text-gray-100 transition-all whitespace-nowrap"
+         data-reveal="fade-up" data-delay="2">Let's talk →</a>
+    </div>
+
+    <!--
+      HORIZONTAL CASE STUDY SLIDER
+      Drag-to-scroll enabled via JS at the bottom of the file.
+      Each .slider-card is 380px wide (100vw - 3rem on mobile).
+
+      CARD STRUCTURE (same for all 4):
+        ┌──────────────────────────────┐
+        │ .h-52  backlit preview area  │  ← decorative, replace with screenshot
+        ├──────────────────────────────┤
+        │ tag pill  (type/platform)    │
+        │ company · date range         │
+        │ h3 project title             │
+        │ one-line description         │
+        │ ─── stat row (3 numbers) ─── │
+        │ "View case study →"          │
+        └──────────────────────────────┘
+
+      ✏ TODO: swap the backlit placeholder areas with real screenshots.
+              Save images to assets/images/ and set as <img> inside .h-52.
+    -->
+    <!-- Slider arrow controls -->
+    <div class="flex items-center gap-3 mb-4">
+      <button id="slider-prev" class="slider-btn" aria-label="Previous">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button id="slider-next" class="slider-btn" aria-label="Next">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3L11 8L6 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="text-[11px] text-gray-600 font-medium tracking-wide ml-1">Drag or use arrows</span>
+    </div>
+
+    <div class="slider-track" id="work-slider" data-reveal="spring" data-delay="1">
+
+      <!-- ── CARD 1: Technician Platform (teal #1EE9B6) ── -->
+      <div class="slider-card">
+        <div class="tilt-card card-link bg-[#0e0e1a] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-[#1EE9B6]/30 transition-colors h-full flex flex-col cursor-pointer" style="box-shadow:0 0 0 rgba(30,233,182,0)" data-tilt data-glow="#1EE9B6" data-href="technician-platform/index.html">
+          <div class="relative h-52 overflow-hidden flex-shrink-0">
+            <div class="absolute inset-0" style="background:linear-gradient(135deg,#061a15 0%,#0d2a20 100%)"></div>
+            <!-- ✏ Save a screenshot as assets/images/technician-card.png (suggested: the admin "All Jobs" dashboard) — it appears automatically -->
+            <img src="assets/images/technician-card.png" alt="Technician Platform — admin dashboard" class="absolute inset-0 w-full h-full object-cover object-top" onerror="this.style.display='none'" />
+            <div class="absolute inset-0" style="background:radial-gradient(ellipse 80% 70% at 50% 110%,rgba(30,233,182,0.35) 0%,transparent 65%)"></div>
+            <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(6,26,21,0.92) 0%,transparent 55%)"></div>
+            <div class="absolute bottom-0 left-0 p-4 flex flex-col gap-2">
+              <div class="flex gap-2 flex-wrap">
+                <div class="bg-[#1EE9B6]/10 border border-[#1EE9B6]/20 rounded-lg px-3 py-1.5 text-[11px] text-[#1EE9B6]/80">Job #1034</div>
+                <div class="bg-[#1EE9B6]/10 border border-[#1EE9B6]/20 rounded-lg px-3 py-1.5 text-[11px] text-[#1EE9B6]/80">Assigned ✓</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-20 h-1 bg-[#1EE9B6]/20 rounded-full overflow-hidden">
+                  <div class="h-full bg-[#1EE9B6]/70 rounded-full" style="width:64%"></div>
+                </div>
+                <span class="text-[10px] text-[#1EE9B6]/60">1,50,000 jobs processed</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-6 flex flex-col flex-1">
+            <div class="inline-block px-3 py-1.5 rounded-full border border-[#1EE9B6]/30 bg-[#1EE9B6]/5 mb-4 self-start">
+              <span class="text-[10px] font-bold text-[#1EE9B6] tracking-widest uppercase">0→1 · Field Ops · iOS & Android + Web</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">The Sleep Company · 2024–Present</p>
+            <a href="technician-platform/index.html" target="_blank" rel="noopener noreferrer"><h3 class="text-2xl text-gray-100 mb-3 hover:text-[#1EE9B6] transition-colors" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">Technician Platform</h3></a>
+            <p class="text-sm text-gray-400 mb-6 leading-relaxed flex-1">Replaced WhatsApp and Google Sheets with a routing engine, mobile app, and admin dashboard for 100+ field technicians.</p>
+            <div class="flex gap-6 pb-5 mb-5 border-b border-white/[0.06]">
+              <div><div class="text-[28px] font-black text-[#1EE9B6] leading-none">1,50,000+</div><div class="text-xs text-gray-500 mt-1">total jobs processed</div></div>
+              <div><div class="text-[28px] font-black text-[#1EE9B6] leading-none">64%</div><div class="text-xs text-gray-500 mt-1">reduction in install cost</div></div>
+              <div><div class="text-[28px] font-black text-[#1EE9B6] leading-none">₹0</div><div class="text-xs text-gray-500 mt-1">platform running cost</div></div>
+            </div>
+            <a href="technician-platform/index.html" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-[#1EE9B6] hover:text-gray-100 transition-colors">View case study →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CARD 2: MedikaCloud (purple #962EFF) ── -->
+      <div class="slider-card">
+        <div class="tilt-card card-link bg-[#0e0e1a] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-[#962EFF]/30 transition-colors h-full flex flex-col cursor-pointer" style="box-shadow:0 0 0 rgba(150,46,255,0)" data-tilt data-glow="#962EFF" data-href="medikacloud/index.html">
+          <div class="relative h-52 overflow-hidden flex-shrink-0">
+            <div class="absolute inset-0" style="background:linear-gradient(135deg,#0e0620 0%,#1a0d35 100%)"></div>
+            <!-- ✏ Save a screenshot as assets/images/medikacloud-card.png (suggested: the Potential Savings dashboard) — it appears automatically -->
+            <img src="assets/images/medikacloud-card.png" alt="MedikaCloud — savings dashboard" class="absolute inset-0 w-full h-full object-cover object-top" onerror="this.style.display='none'" />
+            <div class="absolute inset-0" style="background:radial-gradient(ellipse 80% 70% at 50% 110%,rgba(150,46,255,0.35) 0%,transparent 65%)"></div>
+            <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(14,6,32,0.92) 0%,transparent 55%)"></div>
+            <div class="absolute bottom-0 left-0 p-4 flex flex-col gap-2">
+              <div class="flex gap-2 flex-wrap">
+                <div class="bg-[#962EFF]/10 border border-[#962EFF]/20 rounded-lg px-3 py-1.5 text-[11px] text-[#962EFF]/80">Demand ↑ 23%</div>
+                <div class="bg-[#962EFF]/10 border border-[#962EFF]/20 rounded-lg px-3 py-1.5 text-[11px] text-[#962EFF]/80">SKU Alert</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-20 h-1 bg-[#962EFF]/20 rounded-full overflow-hidden">
+                  <div class="h-full bg-[#962EFF]/70 rounded-full" style="width:50%"></div>
+                </div>
+                <span class="text-[10px] text-[#962EFF]/60">₹2.1Cr+ in savings surfaced</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-6 flex flex-col flex-1">
+            <div class="inline-block px-3 py-1.5 rounded-full border border-[#962EFF]/30 bg-[#962EFF]/5 mb-4 self-start">
+              <span class="text-[10px] font-bold text-[#962EFF] tracking-widest uppercase">0→1 · AI Product · B2B SaaS · HealthTech</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Medikabazaar · 2022–2024</p>
+            <a href="medikacloud/index.html" target="_blank" rel="noopener noreferrer"><h3 class="text-2xl text-gray-100 mb-3 hover:text-[#962EFF] transition-colors" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">MedikaCloud</h3></a>
+            <p class="text-sm text-gray-400 mb-6 leading-relaxed flex-1">Built an AI-powered hospital inventory intelligence platform from scratch — 100 CXO interviews, live AI forecasting, 12 pilot hospitals.</p>
+            <div class="flex gap-6 pb-5 mb-5 border-b border-white/[0.06]">
+              <div><div class="text-[28px] font-black text-[#962EFF] leading-none">₹2.1Cr+</div><div class="text-xs text-gray-500 mt-1">savings surfaced</div></div>
+              <div><div class="text-[28px] font-black text-[#962EFF] leading-none">50%</div><div class="text-xs text-gray-500 mt-1">pilots converted to paid</div></div>
+              <div><div class="text-[28px] font-black text-[#962EFF] leading-none">14%</div><div class="text-xs text-gray-500 mt-1">procurement cost drop</div></div>
+            </div>
+            <a href="medikacloud/index.html" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-[#962EFF] hover:text-gray-100 transition-colors">View case study →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CARD 3: SensAI Sleep App (blue #60A5FA) ── -->
+      <div class="slider-card">
+        <div class="tilt-card card-link bg-[#0e0e1a] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-[#60A5FA]/30 transition-colors h-full flex flex-col cursor-pointer" style="box-shadow:0 0 0 rgba(96,165,250,0)" data-tilt data-glow="#60A5FA" data-href="sensai/index.html">
+          <div class="relative h-52 overflow-hidden flex-shrink-0">
+            <div class="absolute inset-0" style="background:linear-gradient(135deg,#060e1e 0%,#0a1530 100%)"></div>
+            <!-- ✏ Save a screenshot as assets/images/sensai-card.png (suggested: the Sleep Score ring screen) — it appears automatically -->
+            <img src="assets/images/sensai-card.png" alt="SensAI — Sleep Score screen" class="absolute inset-0 w-full h-full object-cover object-top" onerror="this.style.display='none'" />
+            <div class="absolute inset-0" style="background:radial-gradient(ellipse 80% 70% at 50% 110%,rgba(96,165,250,0.35) 0%,transparent 65%)"></div>
+            <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(6,14,30,0.92) 0%,transparent 55%)"></div>
+            <div class="absolute bottom-0 left-0 p-4 flex flex-col gap-2">
+              <div class="flex gap-2 flex-wrap">
+                <div class="bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-lg px-3 py-1.5 text-[11px] text-[#60A5FA]/80">Score: 84</div>
+                <div class="bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-lg px-3 py-1.5 text-[11px] text-[#60A5FA]/80">REM: 1h 42m</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-20 h-1 bg-[#60A5FA]/20 rounded-full overflow-hidden">
+                  <div class="h-full bg-[#60A5FA]/70 rounded-full" style="width:84%"></div>
+                </div>
+                <span class="text-[10px] text-[#60A5FA]/60">₹4.5Cr+ revenue in 12 months</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-6 flex flex-col flex-1">
+            <div class="inline-block px-3 py-1.5 rounded-full border border-[#60A5FA]/30 bg-[#60A5FA]/5 mb-4 self-start">
+              <span class="text-[10px] font-bold text-[#60A5FA] tracking-widest uppercase">0→1 · GenAI · Consumer · iOS & Android</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">The Sleep Company · 2024–2025</p>
+            <a href="sensai/index.html" target="_blank" rel="noopener noreferrer"><h3 class="text-2xl text-gray-100 mb-3 hover:text-[#60A5FA] transition-colors" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">SensAI Sleep App</h3></a>
+            <p class="text-sm text-gray-400 mb-6 leading-relaxed flex-1">Launched an AI sleep-tracking app with Sleep Score, heart rate monitoring, and Generative AI recommendations.</p>
+            <div class="flex gap-6 pb-5 mb-5 border-b border-white/[0.06]">
+              <div><div class="text-[28px] font-black text-[#60A5FA] leading-none">₹4.5Cr+</div><div class="text-xs text-gray-500 mt-1">revenue in 12 months</div></div>
+              <div><div class="text-[28px] font-black text-[#60A5FA] leading-none">A/B tested</div><div class="text-xs text-gray-500 mt-1">across user cohorts</div></div>
+            </div>
+            <a href="sensai/index.html" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-[#60A5FA] hover:text-gray-100 transition-colors">View case study →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CARD 4: The Sleep Company OS (amber #F59E0B) ── -->
+      <div class="slider-card">
+        <div class="tilt-card card-link bg-[#0e0e1a] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-[#F59E0B]/30 transition-colors h-full flex flex-col cursor-pointer" style="box-shadow:0 0 0 rgba(245,158,11,0)" data-tilt data-glow="#F59E0B" data-href="tsc-os/index.html">
+          <div class="relative h-52 overflow-hidden flex-shrink-0">
+            <div class="absolute inset-0" style="background:linear-gradient(135deg,#150d00 0%,#251500 100%)"></div>
+            <!-- ✏ Save a screenshot as assets/images/tsc-os-card.png (suggested: the My Orders page) — it appears automatically -->
+            <img src="assets/images/tsc-os-card.png" alt="The Sleep Company OS — My Orders page" class="absolute inset-0 w-full h-full object-cover object-top" onerror="this.style.display='none'" />
+            <div class="absolute inset-0" style="background:radial-gradient(ellipse 80% 70% at 50% 110%,rgba(245,158,11,0.35) 0%,transparent 65%)"></div>
+            <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(21,13,0,0.92) 0%,transparent 55%)"></div>
+            <div class="absolute bottom-0 left-0 p-4 flex flex-col gap-2">
+              <div class="flex gap-2 flex-wrap">
+                <div class="bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-lg px-3 py-1.5 text-[11px] text-[#F59E0B]/80">210 Stores</div>
+                <div class="bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-lg px-3 py-1.5 text-[11px] text-[#F59E0B]/80">FCR 70%</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-20 h-1 bg-[#F59E0B]/20 rounded-full overflow-hidden">
+                  <div class="h-full bg-[#F59E0B]/70 rounded-full" style="width:91%"></div>
+                </div>
+                <span class="text-[10px] text-[#F59E0B]/60">₹7Cr annual cost savings</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-6 flex flex-col flex-1">
+            <div class="inline-block px-3 py-1.5 rounded-full border border-[#F59E0B]/30 bg-[#F59E0B]/5 mb-4 self-start">
+              <span class="text-[10px] font-bold text-[#F59E0B] tracking-widest uppercase">Platform · OMS · Agentic AI · D2C</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">The Sleep Company · 2024–Present</p>
+            <a href="tsc-os/index.html" target="_blank" rel="noopener noreferrer"><h3 class="text-2xl text-gray-100 mb-3 hover:text-[#F59E0B] transition-colors" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">The Sleep Company OS</h3></a>
+            <p class="text-sm text-gray-400 mb-6 leading-relaxed flex-1">Built the operating system of a scaling D2C brand — OMS, POS flows, returns, 52-touchpoint communication system, and Agentic AI bots.</p>
+            <div class="flex gap-6 pb-5 mb-5 border-b border-white/[0.06]">
+              <div><div class="text-[28px] font-black text-[#F59E0B] leading-none">₹7Cr</div><div class="text-xs text-gray-500 mt-1">annual cost savings</div></div>
+              <div><div class="text-[28px] font-black text-[#F59E0B] leading-none">91%</div><div class="text-xs text-gray-500 mt-1">drop in post-order TAT</div></div>
+              <div><div class="text-[28px] font-black text-[#F59E0B] leading-none">70%</div><div class="text-xs text-gray-500 mt-1">FCR via AI</div></div>
+            </div>
+            <a href="tsc-os/index.html" target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-[#F59E0B] hover:text-gray-100 transition-colors">View case study →</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /slider-track -->
+
+    <p class="text-[11px] text-gray-600 mt-2 mb-16">← Scroll to see all projects</p>
+
+    <!--
+      FELLOWSHIP WORK (tier-2 projects)
+      Smaller cards linking to Google Drive decks.
+      ✏ TODO: replace the href="#" on each card with the actual Google Drive share link.
+    -->
+    <div class="pt-8 border-t border-white/[0.06]">
+      <p class="text-xs text-gray-500 font-bold tracking-widest uppercase mb-6" data-reveal="fade-up">2022 · Fellowship Work · Click to view decks</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- ✏ Save the deck as assets/pdfs/healthifyme.pdf; first-slide preview: assets/images/healthifyme-pdf-preview.png -->
+        <a href="assets/pdfs/healthifyme.pdf" target="_blank" rel="noopener noreferrer" class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-[#1EE9B6]/30 transition-colors group" data-reveal="flip" data-delay="1" data-tilt data-glow="#1EE9B6">
+          <div class="h-36 bg-[#060f0c] border-b border-white/[0.06] overflow-hidden relative">
+            <img src="assets/images/healthifyme-pdf-preview.png" alt="HealthifyMe deck preview" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500 relative z-10" onerror="this.style.display='none'" />
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-[10px] font-bold tracking-widest uppercase text-[#1EE9B6]/30">PDF Preview</span>
+            </div>
+          </div>
+          <div class="p-5">
+            <h4 class="text-lg text-gray-200 mb-1.5 group-hover:text-[#1EE9B6] transition-colors" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">HealthifyMe</h4>
+            <p class="text-xs text-gray-500 leading-relaxed">0→1 product case study — user interviews, wireframes, MVP definition</p>
+          </div>
+        </a>
+        <!-- ✏ Save the deck as assets/pdfs/snapchat.pdf; first-slide preview: assets/images/snapchat-pdf-preview.png -->
+        <a href="assets/pdfs/snapchat.pdf" target="_blank" rel="noopener noreferrer" class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-[#962EFF]/30 transition-colors group" data-reveal="flip" data-delay="2" data-tilt data-glow="#962EFF">
+          <div class="h-36 bg-[#0a060f] border-b border-white/[0.06] overflow-hidden relative">
+            <img src="assets/images/snapchat-pdf-preview.png" alt="Snapchat deck preview" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500 relative z-10" onerror="this.style.display='none'" />
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-[10px] font-bold tracking-widest uppercase text-[#962EFF]/30">PDF Preview</span>
+            </div>
+          </div>
+          <div class="p-5">
+            <h4 class="text-lg text-gray-200 mb-1.5 group-hover:text-[#962EFF] transition-colors" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">Snapchat</h4>
+            <p class="text-xs text-gray-500 leading-relaxed">12-step FTUE analysis — onboarding teardown and redesign</p>
+          </div>
+        </a>
+        <!-- ✏ Save the deck as assets/pdfs/bumble.pdf; first-slide preview: assets/images/bumble-pdf-preview.png -->
+        <a href="assets/pdfs/bumble.pdf" target="_blank" rel="noopener noreferrer" class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-[#60A5FA]/30 transition-colors group" data-reveal="flip" data-delay="3" data-tilt data-glow="#60A5FA">
+          <div class="h-36 bg-[#060810] border-b border-white/[0.06] overflow-hidden relative">
+            <img src="assets/images/bumble-pdf-preview.png" alt="Bumble deck preview" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500 relative z-10" onerror="this.style.display='none'" />
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="text-[10px] font-bold tracking-widest uppercase text-[#60A5FA]/30">PDF Preview</span>
+            </div>
+          </div>
+          <div class="p-5">
+            <h4 class="text-lg text-gray-200 mb-1.5 group-hover:text-[#60A5FA] transition-colors" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">Bumble</h4>
+            <p class="text-xs text-gray-500 leading-relaxed">Product teardown of Bumble Date — jobs-to-be-done framework</p>
+          </div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     CAPABILITIES  ·  heading: CLIP WIPE
+                      left col: FROM-LEFT
+                      right col: FROM-RIGHT
+════════════════════════════════════════════ -->
+<section id="capabilities" class="pt-10 pb-20 px-6 bg-[#0c0c12] border-t border-white/[0.06]">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+      <div>
+        <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-2 text-gray-100"
+            style="font-family:'Instrument Serif',Georgia,serif;font-weight:400"
+           >Where I'm most useful</h2>
+        <p class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] text-gray-400 mt-1" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-style:italic" data-reveal="fade-up" data-delay="1">Where I am most <em style="font-style:italic;color:#962EFF">useful.</em></p>
+      </div>
+      <a href="mailto:chaturvedisharanya@gmail.com"
+         class="flex-shrink-0 text-[13px] font-semibold text-gray-400 px-4 py-2 rounded-lg border border-white/15 hover:border-[#962EFF]/50 hover:text-[#962EFF] transition-all whitespace-nowrap"
+         data-reveal="fade-up" data-delay="2">Let's talk →</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10">
+
+      <!-- Left column → FROM-LEFT   |   Right column → FROM-RIGHT -->
+      <div class="flex gap-4" data-reveal="from-left" data-delay="1">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#962EFF]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">0→1 Product Building</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">When there's an idea but no product, I run discovery, define the MVP, write the PRD, work with engineering, and own the launch.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-4" data-reveal="from-right" data-delay="1">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#962EFF]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">AI & Agentic Products</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">When you need LLMs to actually do something useful — forecasting, automation, GenAI experiences — I know how to build it and measure if it works.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-4" data-reveal="from-left" data-delay="2">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#962EFF]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">Ops & Platform Thinking</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">When your team runs on hacks and spreadsheets, I design the system underneath — routing logic, internal tools, data pipelines, workflows.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-4" data-reveal="from-right" data-delay="2">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#962EFF]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">Consumer Product & UX</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">When you need a mobile app or website that converts, I bring user research, A/B testing, and UX instinct to every decision.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-4" data-reveal="from-left" data-delay="3">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#962EFF]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">B2B SaaS & Enterprise</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">When your customer is a CXO and your sales cycle is 3 months, I know how to build the product, the pricing, and the GTM story.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-4" data-reveal="from-right" data-delay="3">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#962EFF]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">Data & Experimentation</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">When you need metrics that mean something — not vanity dashboards — I build the telemetry, run the experiments, and interpret what's real.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     IMPACT NUMBERS  ·  heading: CLIP WIPE
+                         cards: SPRING POP + COUNT-UP
+════════════════════════════════════════════ -->
+<section id="impact" class="pt-10 pb-20 px-6 bg-[#0a0a0e] border-t border-white/[0.06]">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+      <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] text-gray-100"
+          style="font-family:'Instrument Serif',Georgia,serif;font-weight:400"
+          data-reveal="fade-up">Real world <em style="font-style:italic;color:#1EE9B6">impact</em></h2>
+      <a href="mailto:chaturvedisharanya@gmail.com"
+         class="flex-shrink-0 text-[13px] font-semibold text-gray-400 px-4 py-2 rounded-lg border border-white/15 hover:border-[#1EE9B6]/50 hover:text-[#1EE9B6] transition-all whitespace-nowrap"
+         data-reveal="fade-up" data-delay="1">Let's talk →</a>
+    </div>
+
+    <!--
+      Stat cards: data-reveal="spring" pops them in elastically.
+      data-counter on the number triggers the JS count-up on scroll.
+      data-value / data-prefix / data-suffix / data-format control the count-up output.
+      ✏ TODO: update numbers here whenever results change.
+    -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+      <div class="bg-[#0c0c12] border border-white/[0.07] rounded-2xl p-6" data-reveal="spring" data-delay="1" data-tilt data-glow="#1EE9B6">
+        <div class="text-[40px] font-black text-[#1EE9B6] leading-none mb-3"
+             data-counter data-prefix="₹" data-value="110" data-suffix="Cr+">₹110Cr+</div>
+        <p class="text-xs text-gray-500 leading-relaxed">Monthly GMV processed across 210+ stores</p>
+      </div>
+
+      <div class="bg-[#0c0c12] border border-white/[0.07] rounded-2xl p-6" data-reveal="spring" data-delay="2" data-tilt data-glow="#F59E0B">
+        <div class="text-[40px] font-black text-[#F59E0B] leading-none mb-3"
+             data-counter data-prefix="₹" data-value="7" data-suffix="Cr">₹7Cr</div>
+        <p class="text-xs text-gray-500 leading-relaxed">Annual cost savings delivered at The Sleep Company</p>
+      </div>
+
+      <div class="bg-[#0c0c12] border border-white/[0.07] rounded-2xl p-6" data-reveal="spring" data-delay="3" data-tilt data-glow="#FF6B9D">
+        <div class="text-[40px] font-black text-[#FF6B9D] leading-none mb-3"
+             data-counter data-value="150000" data-format="indian">1,50,000</div>
+        <p class="text-xs text-gray-500 leading-relaxed">Field operations managed on platform I built from scratch</p>
+      </div>
+
+      <div class="bg-[#0c0c12] border border-white/[0.07] rounded-2xl p-6" data-reveal="spring" data-delay="4" data-tilt data-glow="#962EFF">
+        <div class="text-[40px] font-black text-[#962EFF] leading-none mb-3"
+             data-counter data-value="4">4</div>
+        <p class="text-xs text-gray-500 leading-relaxed">Live AI products shipped end-to-end</p>
+      </div>
+
+      <div class="bg-[#0c0c12] border border-white/[0.07] rounded-2xl p-6" data-reveal="spring" data-delay="5" data-tilt data-glow="#60A5FA">
+        <div class="text-[40px] font-black text-[#60A5FA] leading-none mb-3"
+             data-counter data-value="100" data-suffix="+">100+</div>
+        <p class="text-xs text-gray-500 leading-relaxed">Hospital CXOs interviewed across India & UAE</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     TESTIMONIALS  ·  BLUR REVEAL
+     cinematic — everything materialises from haze
+     ✏ HIDDEN for now per Sharanya (2026-07-15) — remove style="display:none" below to bring it back
+════════════════════════════════════════════ -->
+<section id="testimonials" class="pt-10 pb-20 px-6 bg-[#0c0c12] border-t border-white/[0.06]" style="display:none">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-8 text-gray-100"
+        style="font-family:'Instrument Serif',Georgia,serif;font-weight:400"
+        data-reveal="blur">What people say</h2>
+
+    <!-- Carousel viewport -->
+    <div class="overflow-hidden rounded-2xl" data-reveal="blur" data-delay="1">
+      <div class="testimonial-track" id="testimonial-track">
+
+        <!-- Slide 1 -->
+        <div class="testimonial-slide">
+          <div class="bg-[#0a0a0e] border border-[#34D399]/15 rounded-2xl p-8 md:p-10" style="box-shadow:0 0 60px rgba(52,211,153,0.05)">
+            <div class="text-[#34D399]/40 text-5xl font-black leading-none mb-6" style="font-family:'Instrument Serif',Georgia,serif">"</div>
+            <p class="text-base md:text-lg text-gray-300 mb-8 leading-relaxed">
+              Sharanya has an unusually strong product instinct. She asks the questions others miss, connects dots across teams quickly, and has a natural ability to zoom in and out — from the granular details of a user flow to the broader business strategy — without losing clarity at either level.
+            </p>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#34D399] to-teal-700 flex items-center justify-center text-black text-xs font-black flex-shrink-0">VR</div>
+              <div>
+                <p class="font-semibold text-gray-100 text-sm">Vikas Rao</p>
+                <p class="text-xs text-gray-500">Senior Product Manager, The Sleep Company</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="testimonial-slide">
+          <div class="bg-[#0a0a0e] border border-[#60A5FA]/15 rounded-2xl p-8 md:p-10" style="box-shadow:0 0 60px rgba(96,165,250,0.05)">
+            <div class="text-[#60A5FA]/40 text-5xl font-black leading-none mb-6" style="font-family:'Instrument Serif',Georgia,serif">"</div>
+            <p class="text-base md:text-lg text-gray-300 mb-8 leading-relaxed">
+              She picked up complex financial data ecosystems remarkably fast and translating that understanding directly into product decisions that actually moved the needle.
+            </p>
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#60A5FA] to-blue-700 flex items-center justify-center text-black text-xs font-black flex-shrink-0">P</div>
+              <div>
+                <p class="font-semibold text-gray-100 text-sm">Prikshit</p>
+                <p class="text-xs text-gray-500">Data Product Manager, Pragya Technologies</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Dot indicators -->
+    <div class="flex justify-center items-center gap-2 mt-6">
+      <button class="t-dot active" style="width:24px" data-dot="0" aria-label="Slide 1"></button>
+      <button class="t-dot" style="width:8px" data-dot="1" aria-label="Slide 2"></button>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     WRITING  ·  heading: CLIP WIPE
+                 cards: 3-D FLIP staggered
+════════════════════════════════════════════ -->
+<section class="pt-10 pb-20 px-6 bg-[#0a0a0e] border-t border-white/[0.06]" id="writing">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+      <div>
+        <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-2 text-gray-100"
+            style="font-family:'Instrument Serif',Georgia,serif;font-weight:400"
+           >How I think</h2>
+        <p class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] text-gray-400 mt-1" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-style:italic" data-reveal="fade-up" data-delay="1"><em style="font-style:italic;color:#60A5FA">Writing</em> on LinkedIn about product, intuition, and building things.</p>
+      </div>
+      <a href="mailto:chaturvedisharanya@gmail.com"
+         class="flex-shrink-0 text-[13px] font-semibold text-gray-400 px-4 py-2 rounded-lg border border-white/15 hover:border-[#60A5FA]/50 hover:text-[#60A5FA] transition-all whitespace-nowrap"
+         data-reveal="fade-up" data-delay="2">Let's talk →</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+      <!-- Card 1: Hick's Law — decision tree (fewer choices) -->
+      <a href="https://www.linkedin.com/posts/chaturvedisharanya_day-1-hicks-law-activity-6919993031630761985-IZw8" target="_blank" rel="noopener noreferrer"
+         class="relative rounded-2xl overflow-hidden group block h-[260px]"
+         data-reveal="flip" data-delay="1" data-tilt data-glow="#60A5FA">
+        <div class="absolute inset-0" style="background:linear-gradient(145deg,#06091a 0%,#0c1232 100%)"></div>
+        <div class="absolute inset-0" style="background:radial-gradient(ellipse 70% 50% at 70% 30%,rgba(96,165,250,0.15) 0%,transparent 60%)"></div>
+        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 380 260" fill="none" preserveAspectRatio="xMidYMid meet">
+          <line x1="190" y1="30" x2="100" y2="110" stroke="rgba(96,165,250,0.18)" stroke-width="1.5"/>
+          <line x1="190" y1="30" x2="280" y2="110" stroke="rgba(96,165,250,0.18)" stroke-width="1.5"/>
+          <line x1="100" y1="110" x2="60" y2="190" stroke="rgba(96,165,250,0.12)" stroke-width="1"/>
+          <line x1="100" y1="110" x2="140" y2="190" stroke="rgba(96,165,250,0.12)" stroke-width="1"/>
+          <line x1="280" y1="110" x2="240" y2="190" stroke="rgba(96,165,250,0.12)" stroke-width="1"/>
+          <line x1="280" y1="110" x2="320" y2="190" stroke="rgba(96,165,250,0.12)" stroke-width="1"/>
+          <circle cx="190" cy="30" r="5" fill="rgba(96,165,250,0.6)"/>
+          <circle cx="100" cy="110" r="4" fill="rgba(96,165,250,0.4)"/>
+          <circle cx="280" cy="110" r="4" fill="rgba(96,165,250,0.4)"/>
+          <circle cx="60" cy="190" r="3" fill="rgba(96,165,250,0.25)"/>
+          <circle cx="140" cy="190" r="3" fill="rgba(96,165,250,0.25)"/>
+          <circle cx="240" cy="190" r="3" fill="rgba(96,165,250,0.25)"/>
+          <circle cx="320" cy="190" r="3" fill="rgba(96,165,250,0.25)"/>
+        </svg>
+        <!-- ✏ Save an image for this article as assets/images/article-hicks.png — it appears automatically -->
+        <img src="assets/images/article-hicks.png" alt="Hick's Law article" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" />
+        <!-- accent tint stays on top of the article image -->
+        <div class="absolute inset-0 pointer-events-none" style="background:linear-gradient(to bottom right,rgba(96,165,250,0.28) 0%,rgba(96,165,250,0.08) 45%,transparent 70%)"></div>
+        <!-- legibility gradients behind the pill (top) and title + CTA (bottom) -->
+        <div class="absolute inset-x-0 top-0 h-20 pointer-events-none" style="background:linear-gradient(to bottom,rgba(0,0,0,0.72) 0%,rgba(0,0,0,0.35) 60%,transparent 100%)"></div>
+        <div class="absolute inset-x-0 bottom-0 h-[62%] pointer-events-none" style="background:linear-gradient(to top,rgba(0,0,0,0.96) 0%,rgba(0,0,0,0.85) 35%,rgba(0,0,0,0.45) 70%,transparent 100%)"></div>
+        <div class="absolute inset-0 border border-white/[0.07] rounded-2xl group-hover:border-[#60A5FA]/40 transition-colors"></div>
+        <div class="absolute top-5 left-5">
+          <span class="text-[10px] font-bold tracking-widest uppercase text-[#60A5FA] bg-black/70 border border-[#60A5FA]/30 rounded-full px-3 py-1 backdrop-blur-sm">Product Thinking</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-6">
+          <h3 class="text-lg text-gray-200 mb-2 leading-snug group-hover:text-white transition-colors" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">Hick's Law and why fewer choices convert better</h3>
+          <p class="text-sm text-[#60A5FA] font-medium">Read on LinkedIn →</p>
+        </div>
+      </a>
+
+      <!-- Card 2: TikTok algorithm — feedback loop -->
+      <a href="https://www.linkedin.com/posts/chaturvedisharanya_tiktok-nextleappmfellowship-activity-6927282068712243201-H1OW" target="_blank" rel="noopener noreferrer"
+         class="relative rounded-2xl overflow-hidden group block h-[260px]"
+         data-reveal="flip" data-delay="2" data-tilt data-glow="#1EE9B6">
+        <div class="absolute inset-0" style="background:linear-gradient(145deg,#041410 0%,#071e18 100%)"></div>
+        <div class="absolute inset-0" style="background:radial-gradient(ellipse 60% 60% at 40% 40%,rgba(30,233,182,0.12) 0%,transparent 60%)"></div>
+        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 380 260" fill="none" preserveAspectRatio="xMidYMid meet">
+          <circle cx="190" cy="130" r="80" stroke="rgba(30,233,182,0.12)" stroke-width="1" fill="none"/>
+          <circle cx="190" cy="130" r="55" stroke="rgba(30,233,182,0.1)" stroke-width="1" fill="none" stroke-dasharray="4,3"/>
+          <circle cx="190" cy="130" r="30" stroke="rgba(30,233,182,0.15)" stroke-width="1.5" fill="none"/>
+          <circle cx="190" cy="50" r="5" fill="rgba(30,233,182,0.5)"/>
+          <path d="M190 50 A80 80 0 1 1 185 50" stroke="rgba(30,233,182,0.25)" stroke-width="1.5" fill="none" marker-end="url(#arrowTK)"/>
+          <defs>
+            <marker id="arrowTK" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="rgba(30,233,182,0.4)"/>
+            </marker>
+          </defs>
+        </svg>
+        <!-- ✏ Save an image for this article as assets/images/article-tiktok.png — it appears automatically -->
+        <img src="assets/images/article-tiktok.png" alt="TikTok algorithm article" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" />
+        <!-- accent tint stays on top of the article image -->
+        <div class="absolute inset-0 pointer-events-none" style="background:linear-gradient(to bottom right,rgba(30,233,182,0.28) 0%,rgba(30,233,182,0.08) 45%,transparent 70%)"></div>
+        <!-- legibility gradients behind the pill (top) and title + CTA (bottom) -->
+        <div class="absolute inset-x-0 top-0 h-20 pointer-events-none" style="background:linear-gradient(to bottom,rgba(0,0,0,0.72) 0%,rgba(0,0,0,0.35) 60%,transparent 100%)"></div>
+        <div class="absolute inset-x-0 bottom-0 h-[62%] pointer-events-none" style="background:linear-gradient(to top,rgba(0,0,0,0.96) 0%,rgba(0,0,0,0.85) 35%,rgba(0,0,0,0.45) 70%,transparent 100%)"></div>
+        <div class="absolute inset-0 border border-white/[0.07] rounded-2xl group-hover:border-[#1EE9B6]/40 transition-colors"></div>
+        <div class="absolute top-5 left-5">
+          <span class="text-[10px] font-bold tracking-widest uppercase text-[#1EE9B6] bg-black/70 border border-[#1EE9B6]/30 rounded-full px-3 py-1 backdrop-blur-sm">Product Thinking</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-6">
+          <h3 class="text-lg text-gray-200 mb-2 leading-snug group-hover:text-white transition-colors" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">What TikTok's algorithm teaches us about product addiction</h3>
+          <p class="text-sm text-[#1EE9B6] font-medium">Read on LinkedIn →</p>
+        </div>
+      </a>
+
+      <!-- Card 3: Paradox of Choice — scattered options -->
+      <a href="https://www.linkedin.com/posts/chaturvedisharanya_paradox-of-choice-activity-6929463816594358273-Wg8g" target="_blank" rel="noopener noreferrer"
+         class="relative rounded-2xl overflow-hidden group block h-[260px]"
+         data-reveal="flip" data-delay="3" data-tilt data-glow="#962EFF">
+        <div class="absolute inset-0" style="background:linear-gradient(145deg,#0c0318 0%,#150728 100%)"></div>
+        <div class="absolute inset-0" style="background:radial-gradient(ellipse 60% 60% at 50% 60%,rgba(150,46,255,0.12) 0%,transparent 60%)"></div>
+        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 380 260" fill="none" preserveAspectRatio="xMidYMid meet">
+          <circle cx="190" cy="130" r="6" fill="rgba(150,46,255,0.5)"/>
+          <line x1="190" y1="130" x2="80" y2="60"  stroke="rgba(150,46,255,0.2)"  stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="190" y1="130" x2="300" y2="60"  stroke="rgba(150,46,255,0.2)"  stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="190" y1="130" x2="50" y2="150"  stroke="rgba(150,46,255,0.15)" stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="190" y1="130" x2="330" y2="150" stroke="rgba(150,46,255,0.15)" stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="190" y1="130" x2="130" y2="220" stroke="rgba(150,46,255,0.12)" stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="190" y1="130" x2="250" y2="220" stroke="rgba(150,46,255,0.12)" stroke-width="1" stroke-dasharray="3,2"/>
+          <circle cx="80"  cy="60"  r="4" fill="rgba(150,46,255,0.25)"/>
+          <circle cx="300" cy="60"  r="4" fill="rgba(150,46,255,0.25)"/>
+          <circle cx="50"  cy="150" r="3" fill="rgba(150,46,255,0.2)"/>
+          <circle cx="330" cy="150" r="3" fill="rgba(150,46,255,0.2)"/>
+          <circle cx="130" cy="220" r="3" fill="rgba(150,46,255,0.15)"/>
+          <circle cx="250" cy="220" r="3" fill="rgba(150,46,255,0.15)"/>
+        </svg>
+        <!-- ✏ Save an image for this article as assets/images/article-paradox.png — it appears automatically -->
+        <img src="assets/images/article-paradox.png" alt="Paradox of Choice article" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'" />
+        <!-- accent tint stays on top of the article image -->
+        <div class="absolute inset-0 pointer-events-none" style="background:linear-gradient(to bottom right,rgba(150,46,255,0.28) 0%,rgba(150,46,255,0.08) 45%,transparent 70%)"></div>
+        <!-- legibility gradients behind the pill (top) and title + CTA (bottom) -->
+        <div class="absolute inset-x-0 top-0 h-20 pointer-events-none" style="background:linear-gradient(to bottom,rgba(0,0,0,0.72) 0%,rgba(0,0,0,0.35) 60%,transparent 100%)"></div>
+        <div class="absolute inset-x-0 bottom-0 h-[62%] pointer-events-none" style="background:linear-gradient(to top,rgba(0,0,0,0.96) 0%,rgba(0,0,0,0.85) 35%,rgba(0,0,0,0.45) 70%,transparent 100%)"></div>
+        <div class="absolute inset-0 border border-white/[0.07] rounded-2xl group-hover:border-[#962EFF]/40 transition-colors"></div>
+        <div class="absolute top-5 left-5">
+          <span class="text-[10px] font-bold tracking-widest uppercase text-[#962EFF] bg-black/70 border border-[#962EFF]/30 rounded-full px-3 py-1 backdrop-blur-sm">Product Thinking</span>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-6">
+          <h3 class="text-lg text-gray-200 mb-2 leading-snug group-hover:text-white transition-colors" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">The Paradox of Choice — and what it means for product design</h3>
+          <p class="text-sm text-[#962EFF] font-medium">Read on LinkedIn →</p>
+        </div>
+      </a>
+
+    </div>
+
+    <div class="text-center" data-reveal="fade-up">
+      <a href="https://linkedin.com/in/chaturvedisharanya" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-[#60A5FA] font-semibold hover:text-gray-100 transition-colors">View all writing on LinkedIn →</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     ABOUT  ·  heading: CLIP WIPE
+               paragraphs: FADE-UP stagger
+               callout cards: SPRING POP
+               photo: FROM-RIGHT slide
+════════════════════════════════════════════ -->
+<section class="pt-10 pb-20 px-6 bg-[#0c0c12] border-t border-white/[0.06]" id="about">
+  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+
+    <div>
+      <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-2 text-gray-100"
+          style="font-family:'Instrument Serif',Georgia,serif;font-weight:400"
+         >About me</h2>
+      <p class="text-xl text-gray-400 mb-6 leading-snug" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-style:italic" data-reveal="fade-up">Hi, I'm <em style="font-style:italic;color:#F97316">Sharanya.</em></p>
+
+      <p class="text-base text-gray-400 leading-relaxed mb-5" data-reveal="fade-up" data-delay="1">
+        I started as an Electronics & Communication engineer, got obsessed with why people use products, and never went back to hardware.
+      </p>
+      <p class="text-base text-gray-400 leading-relaxed mb-5" data-reveal="fade-up" data-delay="2">
+        I spent 3 years as Chairperson of my college debating society — mentoring 300+ students and organising international debates across 5 countries. That's where I learned to argue a position with evidence, listen to the other side, and communicate with precision. Turns out, that's also how good product decisions get made.
+      </p>
+      <p class="text-base text-gray-400 leading-relaxed mb-10" data-reveal="fade-up" data-delay="3">
+        I'm a GrowthX fellow and Nextleap PM fellow. Being in those rooms — with the sharpest product minds around — fundamentally changed how I think about growth, strategy, and what it really means to build something people care about.
+      </p>
+
+      <div class="space-y-4">
+
+        <div class="bg-gradient-to-br from-[#0a0a0e] to-[#1a0c00] border border-[#F97316]/20 rounded-2xl p-5 hover:border-[#F97316]/50 transition-all group flex items-start gap-4"
+             data-reveal="spring" data-delay="1">
+          <div class="w-10 h-10 rounded-xl bg-[#F97316]/15 border border-[#F97316]/25 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F97316]/25 transition-colors">
+            <svg class="w-5 h-5 text-[#F97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.468 5.99 5.99 0 00-1.925 3.546 5.975 5.975 0 01-2.133-1A3.75 3.75 0 0012 18z"/>
+            </svg>
+          </div>
+          <div>
+            <h4 class="font-semibold text-gray-100 mb-1">Cooking</h4>
+            <p class="text-sm text-gray-400 leading-relaxed">I cook, I film it, I put it on Instagram. NDTV wrote about one of my reels — which I'm choosing to count as a milestone.</p>
+            <!-- ✏ TODO: uncomment and add NDTV article URL below when ready -->
+            <!-- <a href="[NDTV_URL]" class="text-xs text-[#F97316] mt-2 inline-block hover:text-gray-100">Read the NDTV piece →</a> -->
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-[#0a0a0e] to-[#100820] border border-[#962EFF]/20 rounded-2xl p-5 hover:border-[#962EFF]/50 transition-all group flex items-start gap-4" data-reveal="spring" data-delay="2">
+          <div class="w-10 h-10 rounded-xl bg-[#962EFF]/15 border border-[#962EFF]/25 flex items-center justify-center flex-shrink-0 group-hover:bg-[#962EFF]/25 transition-colors">
+            <svg class="w-5 h-5 text-[#962EFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/>
+            </svg>
+          </div>
+          <div>
+            <h4 class="font-semibold text-gray-100 mb-1">Public Speaking</h4>
+            <p class="text-sm text-gray-400 leading-relaxed">Debating in college gave me a stage. I've been looking for reasons to get back on one ever since.</p>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-[#0a0a0e] to-[#060d1a] border border-[#60A5FA]/20 rounded-2xl p-5 hover:border-[#60A5FA]/50 transition-all group flex items-start gap-4" data-reveal="spring" data-delay="3">
+          <div class="w-10 h-10 rounded-xl bg-[#60A5FA]/15 border border-[#60A5FA]/25 flex items-center justify-center flex-shrink-0 group-hover:bg-[#60A5FA]/25 transition-colors">
+            <svg class="w-5 h-5 text-[#60A5FA]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+            </svg>
+          </div>
+          <div>
+            <h4 class="font-semibold text-gray-100 mb-1">Community</h4>
+            <p class="text-sm text-gray-400 leading-relaxed">I believe the best PMs are built through obsessive learning — in communities, in conversations, and by getting things wrong in public.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Photo slides in from the right -->
+    <div class="md:sticky md:top-24" data-reveal="from-right">
+      <div class="rounded-2xl border border-white/[0.08] overflow-hidden shadow-[0_30px_80px_rgba(249,115,22,0.08)] aspect-[4/5]">
+        <img src="assets/images/sharanya.jpg" alt="Sharanya Chaturvedi" class="w-full h-full object-cover object-center" />
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     CTA  ·  SPRING POP — dramatic snap-in
+════════════════════════════════════════════ -->
+<section class="pt-10 pb-24 px-6 bg-[#0a0a0e] border-t border-white/[0.06] text-center" id="contact">
+  <div class="max-w-2xl mx-auto">
+    <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-6 text-gray-100"
+        style="font-family:'Instrument Serif',Georgia,serif;font-weight:400"
+        data-reveal="spring">Let's build something</h2>
+    <p class="text-base md:text-lg text-gray-400 mb-10 leading-relaxed" data-reveal="fade-up" data-delay="1">
+      I'm open to Senior PM and Group PM roles — particularly in AI products, B2B SaaS, and consumer. Based in Mumbai, open to relocation.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center" data-reveal="spring" data-delay="2">
+      <a href="mailto:chaturvedisharanya@gmail.com" class="bg-white text-black text-[14px] font-bold px-6 py-3.5 rounded-xl hover:bg-gray-100 transition-colors">Send me an email →</a>
+      <a href="https://linkedin.com/in/chaturvedisharanya" target="_blank" rel="noopener noreferrer"
+         class="text-[14px] font-bold px-6 py-3.5 rounded-xl border border-white/20 hover:border-[#FF6B9D]/50 hover:text-[#FF6B9D] text-gray-300 transition-all">View my LinkedIn</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── FOOTER ── -->
+<footer class="bg-[#07070b] border-t border-white/[0.06] px-6 py-12">
+  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+    <span class="text-xs text-gray-600">© 2025 Sharanya Chaturvedi</span>
+    <div class="flex items-center gap-6 text-xs text-gray-600">
+      <a href="mailto:chaturvedisharanya@gmail.com" class="hover:text-gray-300 transition-colors">Email</a>
+      <a href="https://linkedin.com/in/chaturvedisharanya" target="_blank" rel="noopener noreferrer" class="hover:text-gray-300 transition-colors">LinkedIn</a>
+      <!-- ✏ TODO: upload resume PDF to assets/ and update href -->
+      <a href="#" class="hover:text-gray-300 transition-colors">Resume (PDF)</a>
+    </div>
+    <span class="text-xs text-gray-600">Built with intention.</span>
+  </div>
+</footer>
+
+
+<script>
+/*
+  ══════════════════════════════════════════════════
+  JAVASCRIPT — 3 independent behaviours
+  ══════════════════════════════════════════════════
+
+  1. DRAG-TO-SCROLL
+     Makes the case study slider draggable with a mouse.
+     Touch scrolling works natively via CSS overflow-x.
+
+  2. SCROLL REVEAL (IntersectionObserver)
+     Watches every [data-reveal] element.
+     When it enters the viewport, adds class "in" which
+     triggers the CSS transition defined per reveal type.
+     Each element is unobserved after it fires (one-shot).
+
+  3. COUNT-UP ANIMATION
+     Watches every [data-counter] element.
+     When 60% of it is visible, counts from 0 to data-value
+     using an ease-out-expo curve over 1.6 s.
+     formatIndian() formats numbers in Indian locale (1,50,000).
+*/
+
+/* ── DRAG-TO-SCROLL ── */
+const slider = document.querySelector('.slider-track');
+let isDown = false, startX, scrollLeft;
+slider.addEventListener('mousedown', e => { isDown = true; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
+slider.addEventListener('mouseleave', () => { isDown = false; });
+slider.addEventListener('mouseup',    () => { isDown = false; });
+slider.addEventListener('mousemove', e => {
+  if (!isDown) return;
+  e.preventDefault();
+  slider.scrollLeft = scrollLeft - (e.pageX - slider.offsetLeft - startX) * 1.2;
+});
+
+
+/* ── SLIDER ARROWS ── */
+(function() {
+  const prev = document.getElementById('slider-prev');
+  const next = document.getElementById('slider-next');
+  const cardW = () => slider.querySelector('.slider-card').offsetWidth + 24;
+  prev.addEventListener('click', () => { slider.scrollBy({ left: -cardW(), behavior: 'smooth' }); });
+  next.addEventListener('click', () => { slider.scrollBy({ left:  cardW(), behavior: 'smooth' }); });
+})();
+
+
+/* ── CURSOR GLOW — soft ambient radial, accent-colour per section ── */
+(function() {
+  const glow = document.getElementById('cursor-glow');
+  const hw   = 140; // half of 280px div
+
+  document.addEventListener('mousemove', e => {
+    glow.style.transform = `translate(${e.clientX - hw}px, ${e.clientY - hw}px)`;
+  }, { passive: true });
+
+  document.addEventListener('mouseleave', () => { glow.style.opacity = '0'; });
+  document.addEventListener('mouseenter', () => { glow.style.opacity = '1'; });
+
+  /* section → accent colour map */
+  const map = {
+    hero:         [255, 107, 157, 0.09],
+    credibility:  [30,  233, 182, 0.07],
+    work:         [30,  233, 182, 0.07],
+    capabilities: [150, 46,  255, 0.08],
+    impact:       [30,  233, 182, 0.08],
+    testimonials: [52,  211, 153, 0.08],
+    writing:      [96,  165, 250, 0.08],
+    about:        [249, 115, 22,  0.07],
+    contact:      [255, 107, 157, 0.09],
+  };
+
+  function setColor(c) {
+    glow.style.background =
+      `radial-gradient(circle, rgba(${c[0]},${c[1]},${c[2]},${c[3]}) 0%, transparent 70%)`;
+  }
+
+  setColor(map['hero']); /* default on load */
+
+  Object.entries(map).forEach(([id, c]) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('mouseenter', () => setColor(c), { passive: true });
+  });
+})();
+
+
+/* ── 3D TILT + ENERGY GLOW — work slider cards ── */
+document.querySelectorAll('[data-tilt]').forEach(card => {
+  const glowColor = card.dataset.glow || '#ffffff';
+  const r = parseInt(glowColor.slice(1,3),16);
+  const g = parseInt(glowColor.slice(3,5),16);
+  const b = parseInt(glowColor.slice(5,7),16);
+
+  card.addEventListener('mouseenter', () => {
+    card.style.transition = 'transform 0.15s ease, box-shadow 0.3s ease';
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transition = 'transform 0.5s cubic-bezier(0.16,1,0.3,1), box-shadow 0.5s ease';
+    card.style.transform  = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+    card.style.boxShadow  = 'none';
+  });
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width  - 0.5;
+    const y = (e.clientY - rect.top)  / rect.height - 0.5;
+    card.style.transform = `perspective(900px) rotateY(${x * 7}deg) rotateX(${-y * 7}deg) translateZ(10px)`;
+    card.style.boxShadow = `0 20px 60px rgba(${r},${g},${b},0.18)`;
+  });
+});
+
+
+
+/* ══════════════════════════════════════════
+   SCROLL REVEAL — IntersectionObserver
+════════════════════════════════════════════ */
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('in');
+      revealObs.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('[data-reveal]').forEach(el => revealObs.observe(el));
+
+
+/* ══════════════════════════════════════════
+   COUNT-UP ANIMATION
+════════════════════════════════════════════ */
+function formatIndian(n) {
+  const s = String(Math.round(n));
+  if (s.length <= 3) return s;
+  const last3 = s.slice(-3);
+  const rest  = s.slice(0, -3);
+  return rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3;
+}
+
+function runCounter(el) {
+  const target   = parseFloat(el.dataset.value);
+  const prefix   = el.dataset.prefix || '';
+  const suffix   = el.dataset.suffix || '';
+  const fmt      = el.dataset.format || '';
+  const duration = 1600;
+  const t0       = performance.now();
+
+  (function tick(now) {
+    const p    = Math.min((now - t0) / duration, 1);
+    const ease = 1 - Math.pow(2, -10 * p);          /* ease-out expo */
+    const val  = target * ease;
+    el.textContent = fmt === 'indian'
+      ? formatIndian(val)
+      : prefix + Math.round(val) + suffix;
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+const counterObs = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      runCounter(entry.target);
+      counterObs.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('[data-counter]').forEach(el => counterObs.observe(el));
+
+
+/* ══════════════════════════════════════════
+   MOBILE MENU
+════════════════════════════════════════════ */
+const hamburger    = document.getElementById('hamburger');
+const mobileMenu   = document.getElementById('mobile-menu');
+const mobileClose  = document.getElementById('mobile-close');
+
+function openMobileMenu()  { hamburger.classList.add('open'); mobileMenu.classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeMobileMenu() { hamburger.classList.remove('open'); mobileMenu.classList.remove('open'); document.body.style.overflow = ''; }
+
+hamburger.addEventListener('click', openMobileMenu);
+mobileClose.addEventListener('click', closeMobileMenu);
+/* close on Escape */
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileMenu(); });
+
+
+/* ══════════════════════════════════════════
+   TESTIMONIALS CAROUSEL
+════════════════════════════════════════════ */
+(function() {
+  const track  = document.getElementById('testimonial-track');
+  const dots   = document.querySelectorAll('.t-dot');
+  const total  = document.querySelectorAll('.testimonial-slide').length;
+  let current  = 0;
+  let timer;
+
+  function goTo(idx) {
+    current = (idx + total) % total;
+    const slideW = track.parentElement.clientWidth;
+    track.style.transform = `translateX(-${current * slideW}px)`;
+    dots.forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+      d.style.width = i === current ? '24px' : '8px';
+    });
+  }
+
+  function startTimer() { timer = setInterval(() => goTo(current + 1), 4500); }
+  function resetTimer()  { clearInterval(timer); startTimer(); }
+
+  dots.forEach((d, i) => d.addEventListener('click', () => { goTo(i); resetTimer(); }));
+
+  /* touch swipe */
+  let tx = 0;
+  track.addEventListener('touchstart', e => { tx = e.touches[0].clientX; clearInterval(timer); }, { passive: true });
+  track.addEventListener('touchend',   e => {
+    const diff = tx - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) goTo(diff > 0 ? current + 1 : current - 1);
+    startTimer();
+  }, { passive: true });
+
+  startTimer();
+})();
+</script>
+
+<script>
+/* ── SCROLL PROGRESS BAR ── */
+(function () {
+  const pb = document.getElementById('scroll-progress');
+  window.addEventListener('scroll', () => {
+    const s = document.documentElement.scrollTop || document.body.scrollTop;
+    const h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    pb.style.transform = `scaleX(${h ? s / h : 0})`;
+  }, { passive: true });
+})();
+</script>
+
+<!-- ══════════════════════════════════════════
+     DM MODAL — Let's talk + Request resumé
+════════════════════════════════════════════ -->
+<div id="dm-overlay" role="dialog" aria-modal="true" aria-labelledby="dm-title">
+  <div id="dm-modal">
+    <button id="dm-close" class="absolute top-4 right-4 w-8 h-8 rounded-full border border-white/10 text-gray-500 hover:text-white hover:border-white/30 transition-colors z-10" aria-label="Close">✕</button>
+
+    <!-- Mode tabs — segmented -->
+    <div class="dm-tabs mb-5 mr-10 relative z-[1]">
+      <button class="dm-tab on" data-mode="talk">👋 Say hello</button>
+      <button class="dm-tab" data-mode="resume">📄 Request resumé</button>
+    </div>
+
+    <!-- ── TALK MODE ── -->
+    <div id="dm-talk" class="relative z-[1]">
+      <h3 id="dm-title" class="text-2xl text-gray-100 mb-1" style="font-family:'Instrument Serif',Georgia,serif;">Slide into my inbox</h3>
+      <p class="text-[13px] text-gray-500 mb-5">No forms-y nonsense — this lands straight in my email.</p>
+      <form id="dm-talk-form" class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="dm-label" for="dm-name">Name *</label>
+            <input class="dm-input" id="dm-name" name="name" type="text" required placeholder="Your good name">
+          </div>
+          <div>
+            <label class="dm-label" for="dm-phone">Phone <span class="normal-case font-medium text-gray-700">(optional)</span></label>
+            <input class="dm-input" id="dm-phone" name="phone" type="tel" value="+91 ">
+          </div>
+        </div>
+        <div>
+          <label class="dm-label" for="dm-email">Email *</label>
+          <input class="dm-input" id="dm-email" name="email" type="email" required placeholder="you@somewhere.com">
+        </div>
+        <div>
+          <label class="dm-label" for="dm-reason">What brings you here? *</label>
+          <select class="dm-input" id="dm-reason" name="reason" required>
+            <option value="" disabled selected>Pick your poison…</option>
+            <option>Hiring a Senior PM — you clearly have great taste</option>
+            <option>Need a product consultant for my brand</option>
+            <option>Recruiter — I have a role that's *perfect* for you</option>
+            <option>Just want to nerd out about product over chai</option>
+            <option>Anything &amp; everything else in the world</option>
+          </select>
+        </div>
+        <div>
+          <label class="dm-label" for="dm-msg">Your message *</label>
+          <textarea class="dm-input" id="dm-msg" name="message" rows="3" required placeholder="Go on, I read everything…"></textarea>
+        </div>
+        <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+        <button type="submit" data-label="Send it →" class="dm-submit w-full bg-white text-black text-sm font-bold py-3 rounded-xl hover:bg-gray-100 transition-colors !mt-4">Send it →</button>
+        <p class="dm-alt !mt-3">or email me directly at <a href="mailto:chaturvedisharanya@gmail.com">chaturvedisharanya@gmail.com</a></p>
+      </form>
+    </div>
+
+    <!-- ── RESUME MODE ── -->
+    <div id="dm-resume" class="hidden relative z-[1]">
+      <h3 class="text-2xl text-gray-100 mb-1" style="font-family:'Instrument Serif',Georgia,serif;">Want the full resumé?</h3>
+      <p class="text-[13px] text-gray-500 mb-5">Drop your email — I'll send it across. And if you'd like to know more, let's connect.</p>
+      <form id="dm-resume-form" class="space-y-3">
+        <div>
+          <label class="dm-label" for="dm-r-email">Your email *</label>
+          <input class="dm-input" id="dm-r-email" name="email" type="email" required placeholder="you@company.com">
+        </div>
+        <div>
+          <label class="dm-label" for="dm-r-company">Company <span class="normal-case font-medium text-gray-700">(optional)</span></label>
+          <input class="dm-input" id="dm-r-company" name="company" type="text" placeholder="Where you work">
+        </div>
+        <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+        <button type="submit" data-label="Request resumé →" class="dm-submit w-full bg-white text-black text-sm font-bold py-3 rounded-xl hover:bg-gray-100 transition-colors !mt-4">Request resumé →</button>
+        <p class="dm-alt !mt-3">or email me directly at <a href="mailto:chaturvedisharanya@gmail.com">chaturvedisharanya@gmail.com</a></p>
+      </form>
+    </div>
+
+    <!-- ── SUCCESS ── -->
+    <div id="dm-success" class="hidden text-center py-10 relative z-[1]">
+      <div class="text-5xl mb-5">✨</div>
+      <h3 class="text-2xl text-gray-100 mb-2" style="font-family:'Instrument Serif',Georgia,serif;">Delivered!</h3>
+      <p id="dm-success-msg" class="text-sm text-gray-400 max-w-xs mx-auto leading-relaxed">It's in my inbox. I read everything — expect a reply soon.</p>
+    </div>
+
+    <!-- ── ERROR ── -->
+    <p id="dm-error" class="hidden text-xs mt-4 leading-relaxed relative z-[1]" style="color:#fb7185;">Hmm, that didn't go through. Email me directly at <a href="mailto:chaturvedisharanya@gmail.com" class="underline">chaturvedisharanya@gmail.com</a> — old school works too.</p>
+  </div>
+</div>
+
+<script>
+/* ── WHOLE-CARD CLICK (drag-safe) ── */
+(function () {
+  let downX = 0, downY = 0;
+  document.addEventListener('mousedown', e => { downX = e.pageX; downY = e.pageY; }, true);
+  document.querySelectorAll('.card-link').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('a')) return;                                   // inner links behave natively
+      if (Math.hypot(e.pageX - downX, e.pageY - downY) > 8) return;        // was a drag, not a click
+      window.open(card.dataset.href, '_blank', 'noopener');
+    });
+  });
+}());
+
+/* ── DM MODAL ── */
+(function () {
+  const overlay = document.getElementById('dm-overlay');
+  const talk    = document.getElementById('dm-talk');
+  const resume  = document.getElementById('dm-resume');
+  const success = document.getElementById('dm-success');
+  const errorEl = document.getElementById('dm-error');
+  const tabs    = document.querySelectorAll('.dm-tab');
+  const EMAIL   = 'chaturvedisharanya@gmail.com';
+
+  function setMode(mode) {
+    tabs.forEach(t => t.classList.toggle('on', t.dataset.mode === mode));
+    talk.classList.toggle('hidden', mode !== 'talk');
+    resume.classList.toggle('hidden', mode !== 'resume');
+    success.classList.add('hidden');
+    errorEl.classList.add('hidden');
+  }
+  tabs.forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
+
+  function openModal(mode) { setMode(mode); overlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  function closeModal()    { overlay.classList.remove('open'); document.body.style.overflow = ''; }
+
+  document.getElementById('dm-close').addEventListener('click', closeModal);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  /* Bind every "Let's talk" + "Send me an email" CTA and the footer resumé link */
+  document.querySelectorAll('a').forEach(a => {
+    const label = a.textContent.trim();
+    if (label.startsWith("Let's talk") || label.startsWith('Send me an email')) {
+      a.addEventListener('click', e => { e.preventDefault(); openModal('talk'); });
+    } else if (label === 'Resume (PDF)') {
+      a.addEventListener('click', e => { e.preventDefault(); openModal('resume'); });
+    }
+  });
+
+  /* Submit via FormSubmit AJAX */
+  function send(form, payload, successMsg) {
+    const btn = form.querySelector('.dm-submit');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    fetch('https://formsubmit.co/ajax/' + EMAIL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(() => {
+      talk.classList.add('hidden'); resume.classList.add('hidden');
+      document.getElementById('dm-success-msg').textContent = successMsg;
+      success.classList.remove('hidden');
+      form.reset();
+    })
+    .catch(() => { errorEl.classList.remove('hidden'); })
+    .finally(() => { btn.disabled = false; btn.textContent = btn.dataset.label || 'Send it →'; });
+  }
+
+  document.getElementById('dm-talk-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const f = new FormData(this);
+    const phone = (f.get('phone') || '').trim();
+    send(this, {
+      _subject: 'DM on Portfolio — ' + f.get('name'),
+      _template: 'table',
+      Name: f.get('name'),
+      Email: f.get('email'),
+      Phone: (phone && phone !== '+91') ? phone : '—',
+      Reason: f.get('reason'),
+      Message: f.get('message')
+    }, "It's in my inbox. I read everything — expect a reply soon.");
+  });
+
+  document.getElementById('dm-resume-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const f = new FormData(this);
+    send(this, {
+      _subject: 'Resume Request — ' + (f.get('company') || f.get('email')),
+      _template: 'table',
+      'Requester email': f.get('email'),
+      'Company': f.get('company') || '—',
+      'To approve': 'Reply to ' + f.get('email') + ' with the resumé PDF attached. Ignoring this email = declining.'
+    }, "Request sent! The resumé will land in your inbox soon.");
+  });
+}());
+</script>
+</body>
+</html>

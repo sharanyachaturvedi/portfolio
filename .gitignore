@@ -1,0 +1,12 @@
+# Claude Code workspace files
+.claude/
+.claude.json
+
+# Private working notes / brain dumps — not for the public repo
+PORTFOLIO_BRIEF.md
+*-context.md
+
+# Old versions & design references not served on the site
+index-v1.html
+thrive-landing.html
+home-page-images/

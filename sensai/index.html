@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SensAI Sleep App — Sharanya Chaturvedi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { brand: '#60A5FA', purple: '#962EFF' },
+          fontFamily: {
+            sans: ['Inter', 'Arial', 'sans-serif'],
+            serif: ['Instrument Serif', 'Georgia', 'serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- reveal animations only hide content when JS is running; without JS everything stays visible -->
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    body { background-color: #0a0a0e; -webkit-font-smoothing: antialiased; font-family: 'Inter', Arial, sans-serif; }
+    h1, h2, h3, h4 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; }
+    ::selection { background: #60A5FA; color: #000; }
+
+    /* ── HERO LOAD ── */
+    .hero-up  { opacity:0; animation: heroUp  0.9s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .hero-vis { opacity:0; animation: heroVis 1s  cubic-bezier(0.16,1,0.3,1) forwards; }
+    @keyframes heroUp  { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:none} }
+    @keyframes heroVis { from{opacity:0;transform:translateX(40px) scale(0.96)} to{opacity:1;transform:none} }
+
+    /* ── SCROLL REVEAL (hidden states scoped to .js so nothing stays invisible if JS fails) ── */
+    .js [data-reveal="fade-up"]   { opacity:0; transform:translateY(28px); transition:opacity .7s ease, transform .7s cubic-bezier(0.16,1,0.3,1); }
+    .js [data-reveal="spring"]    { opacity:0; transform:scale(0.78) translateY(24px); transition:opacity .45s ease, transform 1s cubic-bezier(0.34,1.56,0.64,1); }
+    .js [data-reveal="blur"]      { opacity:0; filter:blur(14px) saturate(0); transform:translateY(12px) scale(0.98); transition:opacity .9s ease, filter .9s ease, transform .9s cubic-bezier(0.16,1,0.3,1); }
+    .js [data-reveal="from-right"]{ opacity:0; transform:translateX(56px); transition:opacity .75s ease, transform .85s cubic-bezier(0.16,1,0.3,1); }
+    .js [data-reveal="from-left"] { opacity:0; transform:translateX(-56px); transition:opacity .75s ease, transform .85s cubic-bezier(0.16,1,0.3,1); }
+    .js [data-reveal="flip"]      { opacity:0; transform:perspective(700px) rotateX(30deg) translateY(32px); transform-origin:top center; transition:opacity .6s ease, transform .85s cubic-bezier(0.16,1,0.3,1); }
+    .js [data-reveal].in { opacity:1; transform:none; filter:none; }
+    [data-delay="1"]{transition-delay:80ms}[data-delay="2"]{transition-delay:160ms}[data-delay="3"]{transition-delay:240ms}
+    [data-delay="4"]{transition-delay:320ms}[data-delay="5"]{transition-delay:400ms}[data-delay="6"]{transition-delay:480ms}
+
+    /* ── CURSOR GLOW ── */
+    #cursor-glow { position:fixed; left:0; top:0; pointer-events:none; z-index:9999; width:280px; height:280px; border-radius:50%; mix-blend-mode:screen; transition:background .75s ease; background:radial-gradient(circle,rgba(96,165,250,0.09) 0%,transparent 70%); will-change:transform; transform:translate(-9999px,-9999px); }
+
+    /* ── TILT ── */
+    .tilt-card { transition:transform .5s cubic-bezier(0.16,1,0.3,1), box-shadow .5s ease; transform-style:preserve-3d; will-change:transform; }
+
+    /* ── MOBILE MENU ── */
+    #mobile-menu { display:none; }
+    #mobile-menu.open { display:flex; }
+    #hamburger .hline { display:block; width:20px; height:2px; background:white; border-radius:2px; transition:all .25s ease; }
+    #hamburger.open .hline:nth-child(1){ transform:translateY(7px) rotate(45deg); }
+    #hamburger.open .hline:nth-child(2){ opacity:0; transform:scaleX(0); }
+    #hamburger.open .hline:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
+
+    /* ── SCROLL PROGRESS ── */
+    #scroll-progress { transform-origin:left; transform:scaleX(0); }
+
+    /* ── PHONE SCORE RING ── */
+    .score-arc { stroke-dasharray:314; stroke-dashoffset:314; animation:fillArc 1.8s cubic-bezier(0.16,1,0.3,1) 0.6s forwards; }
+    @keyframes fillArc { to { stroke-dashoffset: 38; } }
+
+    /* ── PHONE SCREENSHOT CROSSFADE ── */
+    .phone-shot { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; animation:phoneCycle 9s ease-in-out infinite; }
+    @keyframes phoneCycle { 0%{opacity:0} 4%{opacity:1} 30%{opacity:1} 36%{opacity:0} 100%{opacity:0} }
+  </style>
+</head>
+<body class="text-white font-sans">
+<div id="cursor-glow"></div>
+
+<!-- SCROLL PROGRESS -->
+<div class="fixed top-0 left-0 w-full h-0.5 z-[60]">
+  <div class="h-full bg-[#60A5FA]" id="scroll-progress"></div>
+</div>
+
+<!-- ── NAV ── -->
+<nav class="sticky top-0 z-40 border-b border-white/[0.07] bg-[#0a0a0e]/92 backdrop-blur-xl">
+  <div class="max-w-7xl mx-auto px-6 h-[62px] flex items-center justify-between gap-4">
+    <a href="/" class="flex-shrink-0">
+      <div style="font-family:'Peace Sans',sans-serif;line-height:0.92;color:#f3f4f6;font-size:17px;font-weight:400;letter-spacing:0.01em">
+        <span style="display:block">Sharanya</span><span style="display:block">Chaturvedi</span>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-8">
+      <a href="/#work"   class="text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">← All Work</a>
+      <span class="text-[13px] text-[#60A5FA] font-semibold">SensAI</span>
+      <a href="#insight" class="text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">Insight</a>
+      <a href="#ai"      class="text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">AI</a>
+      <a href="#impact"  class="text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">Impact</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="mailto:chaturvedisharanya@gmail.com" class="flex-shrink-0 bg-white text-black text-[13px] font-bold px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">Let's talk →</a>
+      <button id="hamburger" class="md:hidden flex flex-col justify-center items-center gap-[5px] w-9 h-9 rounded-lg hover:bg-white/5 transition-colors" aria-label="Open menu">
+        <span class="hline"></span><span class="hline"></span><span class="hline"></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div id="mobile-menu" class="fixed inset-0 z-50 bg-[#0a0a0e] flex-col items-center justify-center gap-8">
+  <button id="mobile-close" class="absolute top-5 right-6 text-gray-400 hover:text-white text-xl transition-colors" aria-label="Close">✕</button>
+  <a href="/#work"   onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-[#60A5FA] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">← All Work</a>
+  <a href="#insight" onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-[#60A5FA] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">Insight</a>
+  <a href="#ai"      onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-[#60A5FA] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">AI</a>
+  <a href="#impact"  onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-[#60A5FA] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">Impact</a>
+  <a href="mailto:chaturvedisharanya@gmail.com" class="mt-6 bg-white text-black text-[14px] font-bold px-7 py-3.5 rounded-xl hover:bg-gray-100 transition-colors">Let's talk →</a>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     HERO
+════════════════════════════════════════════ -->
+<section class="relative overflow-hidden" id="hero" style="background:radial-gradient(ellipse 70% 60% at 65% 50%,rgba(96,165,250,0.07) 0%,transparent 65%),#0a0a0e">
+  <div class="max-w-7xl mx-auto px-6 py-16 md:py-24 flex flex-col md:flex-row items-center gap-10 md:gap-16">
+
+    <!-- Left -->
+    <div class="flex-1 min-w-0 w-full">
+      <div class="hero-up flex flex-wrap gap-2 mb-6" style="animation-delay:0ms">
+        <div class="px-3 py-1.5 rounded-full border border-[#60A5FA]/30 bg-[#60A5FA]/5">
+          <span class="text-[11px] font-bold text-[#60A5FA] tracking-wider uppercase">0→1 · GenAI · Consumer</span>
+        </div>
+        <div class="px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
+          <span class="text-[11px] font-bold text-gray-400 tracking-wider uppercase">The Sleep Company · 2024–25</span>
+        </div>
+      </div>
+      <h1 class="hero-up text-5xl md:text-6xl lg:text-[68px] leading-[1.05] tracking-[-1px] mb-6 text-gray-100"
+          style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;animation-delay:60ms">
+        I built the app that turned a mattress into a
+        <em style="font-style:italic;color:#60A5FA"> sleep coach.</em>
+      </h1>
+      <p class="hero-up text-base md:text-[17px] text-gray-400 mb-8 leading-relaxed max-w-[500px]" style="animation-delay:150ms">
+        The Sleep Company's first AI product. IoT hardware + a mobile app powered by ML and GenAI — from zero to Rs4 crore in 12 months.
+      </p>
+      <div class="hero-up flex flex-col sm:flex-row gap-3" style="animation-delay:240ms">
+        <a href="#impact" class="inline-flex items-center justify-center gap-2 bg-white text-black text-[14px] font-bold px-5 py-3 rounded-xl hover:bg-gray-100 transition-colors">See the impact →</a>
+        <a href="#ai" class="inline-flex items-center justify-center gap-2 text-[14px] font-semibold text-gray-300 px-5 py-3 rounded-xl border border-white/20 hover:border-[#60A5FA]/40 hover:text-[#60A5FA] transition-all">The AI features</a>
+      </div>
+    </div>
+
+    <!-- Right: phone mockup -->
+    <div class="hero-vis flex-shrink-0 w-full md:w-[340px] lg:w-[380px]" style="animation-delay:200ms">
+      <div class="relative">
+        <!-- ambient glow -->
+        <div class="absolute inset-0 rounded-full blur-[80px] scale-75 translate-y-8" style="background:rgba(96,165,250,0.18)"></div>
+        <!-- phone shell -->
+        <div class="relative mx-auto w-[260px]">
+          <div class="rounded-[36px] border-[7px] overflow-hidden" style="border-color:#141428;box-shadow:0 40px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(96,165,250,0.15)">
+            <!-- screen: real app screenshots, auto-crossfading -->
+            <div class="bg-[#06080f] relative overflow-hidden" style="aspect-ratio:9/19">
+              <div class="absolute inset-0 flex items-center justify-center text-center px-6" style="font-size:9px;color:rgba(255,255,255,0.25);line-height:1.6">
+                Drop app-screen-1.png, app-screen-2.png, app-screen-3.png into /sensai/images/
+              </div>
+              <img src="images/app-screen-1.png" alt="SensAI app — Sleep Score screen" class="phone-shot" style="animation-delay:0s" onerror="this.style.display='none'">
+              <img src="images/app-screen-2.png" alt="SensAI app — AI Sleep Coach screen" class="phone-shot" style="animation-delay:3s" onerror="this.style.display='none'">
+              <img src="images/app-screen-3.png" alt="SensAI app — Sleep trends screen" class="phone-shot" style="animation-delay:6s" onerror="this.style.display='none'">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- bg blobs -->
+  <div class="absolute top-1/3 -right-24 w-80 h-80 rounded-full blur-[100px] pointer-events-none" style="background:rgba(96,165,250,0.05)"></div>
+  <div class="absolute bottom-0 -left-24 w-80 h-80 rounded-full blur-[100px] pointer-events-none" style="background:rgba(150,46,255,0.05)"></div>
+</section>
+
+
+<!-- ── CONTEXT STRIP ── -->
+<div class="border-t border-b border-white/[0.06] bg-[#0c0c12] py-8 px-6">
+  <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
+    <div data-reveal="fade-up" data-delay="1">
+      <p class="text-[10px] font-bold tracking-[0.15em] uppercase text-gray-600 mb-1">Role</p>
+      <p class="text-sm font-semibold text-gray-100">Senior Product Manager</p>
+    </div>
+    <div data-reveal="fade-up" data-delay="2">
+      <p class="text-[10px] font-bold tracking-[0.15em] uppercase text-gray-600 mb-1">Company</p>
+      <p class="text-sm font-semibold text-gray-100">The Sleep Company</p>
+    </div>
+    <div data-reveal="fade-up" data-delay="3">
+      <p class="text-[10px] font-bold tracking-[0.15em] uppercase text-gray-600 mb-1">Timeline</p>
+      <p class="text-sm font-semibold text-gray-100">2024 – 2025</p>
+    </div>
+    <div data-reveal="fade-up" data-delay="4">
+      <p class="text-[10px] font-bold tracking-[0.15em] uppercase text-gray-600 mb-1">Platform</p>
+      <p class="text-sm font-semibold text-gray-100">iOS · Android · Admin Dashboard</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     THE INSIGHT
+════════════════════════════════════════════ -->
+<section class="pt-16 pb-20 px-6 bg-[#0a0a0e]" id="insight">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="mb-12">
+      <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-2 text-gray-100"
+          style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">The market was wrong</h2>
+      <p class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] text-gray-400"
+         style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-style:italic"
+         data-reveal="fade-up" data-delay="1">about where the tracker should <em style="color:#60A5FA">live.</em></p>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+
+      <div class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl p-5 tilt-card" data-reveal="spring" data-delay="1" data-tilt data-glow="#60A5FA">
+        <div class="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+          </svg>
+        </div>
+        <div class="inline-block px-2.5 py-1 rounded-full border border-red-500/20 bg-red-500/5 mb-4">
+          <span class="text-[10px] font-bold text-red-400 tracking-widest uppercase">The Problem</span>
+        </div>
+        <h3 class="text-lg text-gray-100 mb-2" style="font-family:'Instrument Serif',Georgia,serif">Wearable Fatigue</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">Sleep tracking is dominated by Fitbit, Oura, Apple Watch. Every one requires something on your body.</p>
+      </div>
+
+      <div class="bg-[#0e0e1a] border border-[#60A5FA]/20 rounded-2xl p-5 tilt-card" data-reveal="spring" data-delay="2" data-tilt data-glow="#60A5FA" style="box-shadow:0 0 40px rgba(96,165,250,0.05)">
+        <div class="w-10 h-10 rounded-xl bg-[#60A5FA]/10 border border-[#60A5FA]/20 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-[#60A5FA]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/>
+          </svg>
+        </div>
+        <div class="inline-block px-2.5 py-1 rounded-full border border-[#60A5FA]/30 bg-[#60A5FA]/5 mb-4">
+          <span class="text-[10px] font-bold text-[#60A5FA] tracking-widest uppercase">The Insight</span>
+        </div>
+        <h3 class="text-lg text-gray-100 mb-2" style="font-family:'Instrument Serif',Georgia,serif">Put the tracker in the bed.</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">If the mattress itself is the sensor, there's nothing to wear, charge, or remember. Zero friction. 100% passive.</p>
+      </div>
+
+      <div class="bg-[#0e0e1a] border border-amber-500/20 rounded-2xl p-5 tilt-card" data-reveal="spring" data-delay="3" data-tilt data-glow="#F59E0B">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/>
+          </svg>
+        </div>
+        <div class="inline-block px-2.5 py-1 rounded-full border border-amber-500/20 bg-amber-500/5 mb-4">
+          <span class="text-[10px] font-bold text-amber-400 tracking-widest uppercase">The Problem · Hardware</span>
+        </div>
+        <h3 class="text-lg text-gray-100 mb-2" style="font-family:'Instrument Serif',Georgia,serif">Hard or Soft. Never Both.</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">The physical mattress is broken — you could buy a hard mattress or a soft one, never one that adjusted to your body. No half-and-half, no way to change your mind as per your body.</p>
+      </div>
+
+      <div class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl p-5 tilt-card" data-reveal="spring" data-delay="4" data-tilt data-glow="#60A5FA">
+        <div class="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>
+          </svg>
+        </div>
+        <div class="inline-block px-2.5 py-1 rounded-full border border-green-500/20 bg-green-500/5 mb-4">
+          <span class="text-[10px] font-bold text-green-400 tracking-widest uppercase">The Opportunity</span>
+        </div>
+        <h3 class="text-lg text-gray-100 mb-2" style="font-family:'Instrument Serif',Georgia,serif">Brand to Tech Company</h3>
+        <p class="text-sm text-gray-400 leading-relaxed">The Sleep Company wanted to lead the category — that meant moving into technology, building for the future. SensAI was that: a new product category, a new revenue model, and a new position as a tech-first wellness brand.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     PRODUCT SUITE
+════════════════════════════════════════════ -->
+<section class="pt-8 pb-20 px-6 bg-[#0c0c12] border-t border-white/[0.06]">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="mb-12">
+      <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-2 text-gray-100"
+          style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">The product suite</h2>
+      <p class="text-xl text-gray-400" style="font-family:'Instrument Serif',Georgia,serif;font-style:italic" data-reveal="fade-up" data-delay="1">Two connected hardware products. One unified mobile experience.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Pillow / Tracker -->
+      <div class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl overflow-hidden tilt-card" data-reveal="from-left" data-tilt data-glow="#60A5FA">
+        <div class="relative h-44 overflow-hidden">
+          <div class="absolute inset-0" style="background:linear-gradient(135deg,#060e1e 0%,#0a1530 100%)"></div>
+          <div class="absolute inset-0" style="background:radial-gradient(ellipse 80% 70% at 50% 110%,rgba(96,165,250,0.28) 0%,transparent 65%)"></div>
+          <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(6,14,30,0.95) 0%,transparent 60%)"></div>
+          <svg class="absolute inset-0 w-full h-full opacity-25" viewBox="0 0 400 180" preserveAspectRatio="xMidYMid meet">
+            <ellipse cx="200" cy="105" rx="145" ry="50" fill="none" stroke="#60A5FA" stroke-width="1" stroke-dasharray="4,4"/>
+            <ellipse cx="200" cy="100" rx="125" ry="40" fill="rgba(96,165,250,0.04)" stroke="#60A5FA" stroke-width="0.5"/>
+            <circle cx="140" cy="100" r="3" fill="rgba(96,165,250,0.7)"/>
+            <circle cx="200" cy="96" r="3.5" fill="rgba(96,165,250,0.9)"/>
+            <circle cx="260" cy="100" r="3" fill="rgba(96,165,250,0.7)"/>
+            <circle cx="170" cy="110" r="2" fill="rgba(96,165,250,0.45)"/>
+            <circle cx="230" cy="110" r="2" fill="rgba(96,165,250,0.45)"/>
+          </svg>
+          <!-- product photo: drop product-analyser.jpg into /sensai/images/ (falls back to the art above if missing) -->
+          <img src="images/product-analyser.jpg" alt="SensAI Sleep Analyser" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'">
+          <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(6,14,30,0.9) 0%,transparent 55%)"></div>
+          <div class="absolute bottom-4 left-6 flex flex-wrap gap-1.5">
+            <span class="bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-lg px-2.5 py-1 text-[10px] text-[#60A5FA]/80">Movement Sensing</span>
+            <span class="bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-lg px-2.5 py-1 text-[10px] text-[#60A5FA]/80">Heart Rate</span>
+            <span class="bg-[#60A5FA]/10 border border-[#60A5FA]/20 rounded-lg px-2.5 py-1 text-[10px] text-[#60A5FA]/80">Resp. Rate</span>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="inline-block px-3 py-1.5 rounded-full border border-[#60A5FA]/30 bg-[#60A5FA]/5 mb-4">
+            <span class="text-[10px] font-bold text-[#60A5FA] tracking-widest uppercase">Product 1</span>
+          </div>
+          <h3 class="text-2xl text-gray-100 mb-3" style="font-family:'Instrument Serif',Georgia,serif">SensAI Sleep Analyser</h3>
+          <p class="text-sm text-gray-400 leading-relaxed mb-4">Two form factors: a standalone flat tracker placed on the bed, and the SensAI Pillow (tracker embedded + dongle). Syncs biometric data to the app via Wi-Fi dongle overnight — fully passive, nothing on your body.</p>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+            <span>· Sleep stage tracking</span><span>· Heart rate variability</span><span>· Respiratory monitoring</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mattress -->
+      <div class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl overflow-hidden tilt-card" data-reveal="from-right" data-tilt data-glow="#A78BFA">
+        <div class="relative h-44 overflow-hidden">
+          <div class="absolute inset-0" style="background:linear-gradient(135deg,#0e0520 0%,#1a0d35 100%)"></div>
+          <div class="absolute inset-0" style="background:radial-gradient(ellipse 80% 70% at 50% 110%,rgba(167,139,250,0.28) 0%,transparent 65%)"></div>
+          <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(14,5,32,0.95) 0%,transparent 60%)"></div>
+          <svg class="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 400 180" preserveAspectRatio="xMidYMid meet">
+            <rect x="55" y="40" width="290" height="105" rx="8" fill="none" stroke="rgba(167,139,250,0.5)" stroke-width="1"/>
+            <line x1="107" y1="40" x2="107" y2="145" stroke="rgba(167,139,250,0.25)" stroke-width="0.5" stroke-dasharray="2,2"/>
+            <line x1="155" y1="40" x2="155" y2="145" stroke="rgba(167,139,250,0.25)" stroke-width="0.5" stroke-dasharray="2,2"/>
+            <line x1="203" y1="40" x2="203" y2="145" stroke="rgba(167,139,250,0.25)" stroke-width="0.5" stroke-dasharray="2,2"/>
+            <line x1="251" y1="40" x2="251" y2="145" stroke="rgba(167,139,250,0.25)" stroke-width="0.5" stroke-dasharray="2,2"/>
+            <line x1="299" y1="40" x2="299" y2="145" stroke="rgba(167,139,250,0.25)" stroke-width="0.5" stroke-dasharray="2,2"/>
+            <text x="81" y="97" text-anchor="middle" fill="rgba(167,139,250,0.6)" font-size="7" font-family="Inter">SHOULDER</text>
+            <text x="131" y="97" text-anchor="middle" fill="rgba(167,139,250,0.6)" font-size="7" font-family="Inter">BACK</text>
+            <text x="179" y="97" text-anchor="middle" fill="rgba(167,139,250,0.6)" font-size="7" font-family="Inter">WAIST</text>
+            <text x="227" y="97" text-anchor="middle" fill="rgba(167,139,250,0.6)" font-size="7" font-family="Inter">LUMBAR</text>
+            <text x="275" y="97" text-anchor="middle" fill="rgba(167,139,250,0.6)" font-size="7" font-family="Inter">HIP</text>
+            <text x="323" y="97" text-anchor="middle" fill="rgba(167,139,250,0.6)" font-size="7" font-family="Inter">LEG</text>
+          </svg>
+          <!-- product photo: drop product-mattress.jpg into /sensai/images/ (falls back to the art above if missing) -->
+          <img src="images/product-mattress.jpg" alt="SensAI Mattress" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.display='none'">
+          <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(14,5,32,0.9) 0%,transparent 55%)"></div>
+          <div class="absolute bottom-4 left-6 flex flex-wrap gap-1.5">
+            <span class="bg-[#A78BFA]/10 border border-[#A78BFA]/20 rounded-lg px-2.5 py-1 text-[10px] text-[#A78BFA]/80">Anti-Snore Mode</span>
+            <span class="bg-[#A78BFA]/10 border border-[#A78BFA]/20 rounded-lg px-2.5 py-1 text-[10px] text-[#A78BFA]/80">6-Zone AI Firmness</span>
+            <span class="bg-[#A78BFA]/10 border border-[#A78BFA]/20 rounded-lg px-2.5 py-1 text-[10px] text-[#A78BFA]/80">Smart Wake-Up</span>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="inline-block px-3 py-1.5 rounded-full border border-[#A78BFA]/30 bg-[#A78BFA]/5 mb-4">
+            <span class="text-[10px] font-bold text-[#A78BFA] tracking-widest uppercase">Product 2</span>
+          </div>
+          <h3 class="text-2xl text-gray-100 mb-3" style="font-family:'Instrument Serif',Georgia,serif">SensAI Mattress</h3>
+          <p class="text-sm text-gray-400 leading-relaxed mb-4">ZonePro system with 6 pressure zones. AI-driven firmness adjusts in real-time to sleep position and body weight. Anti-Snore Mode uses acoustic sensors to detect snoring and automatically adjusts head position. Independent recline per side.</p>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+            <span>· Biometric IoT sensors</span><span>· App-controlled</span><span>· Premium D2C</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     WHAT I OWNED
+════════════════════════════════════════════ -->
+<section class="pt-8 pb-20 px-6 bg-[#0a0a0e] border-t border-white/[0.06]">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="mb-12">
+      <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-2 text-gray-100"
+          style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">What I owned</h2>
+      <p class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] text-gray-400"
+         style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-style:italic"
+         data-reveal="fade-up" data-delay="1">End-to-end. First <em style="color:#60A5FA">wireframe</em> to live App Store listing.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8">
+      <div class="flex gap-4" data-reveal="from-left" data-delay="1">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#60A5FA]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">UI/UX Design</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Every screen — Sleep Score, GenAI coach, onboarding, biometrics.</p>
+        </div>
+      </div>
+      <div class="flex gap-4" data-reveal="from-right" data-delay="1">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#60A5FA]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">App Backend & IoT Integration</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Real-time sensor-to-cloud pipeline that survives erratic home Wi-Fi.</p>
+        </div>
+      </div>
+      <div class="flex gap-4" data-reveal="from-left" data-delay="2">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#60A5FA]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">Admin Dashboard</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">One tool for device telemetry, user analytics, and fleet-wide firmware updates.</p>
+        </div>
+      </div>
+      <div class="flex gap-4" data-reveal="from-right" data-delay="2">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#60A5FA]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">App Store & Play Store Launch</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Compliance, review, store copy — one synchronized iOS + Android launch.</p>
+        </div>
+      </div>
+      <div class="flex gap-4" data-reveal="from-left" data-delay="3">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#60A5FA]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">Analytics & Experimentation</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Telemetry, funnels, A/B framework, and user research from day one.</p>
+        </div>
+      </div>
+      <div class="flex gap-4" data-reveal="from-right" data-delay="3">
+        <div class="w-1 flex-shrink-0 rounded-full bg-[#60A5FA]/40 mt-1"></div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">Post-Launch Maintenance</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Bugs, iterations, firmware — improvement driven by real usage data.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     THE AI FEATURES
+════════════════════════════════════════════ -->
+<section class="pt-8 pb-20 px-6 bg-[#0c0c12] border-t border-white/[0.06]" id="ai">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="mb-12">
+      <p class="text-[11px] font-bold tracking-[0.15em] uppercase text-[#60A5FA] mb-3" data-reveal="fade-up">PM Deep Dive</p>
+      <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-2 text-gray-100"
+          style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">The intelligence layer</h2>
+      <p class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] text-gray-400"
+         style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-style:italic"
+         data-reveal="fade-up" data-delay="1">Where product thinking meets <em style="color:#A78BFA">generative engineering.</em></p>
+    </div>
+
+    <!-- ── AI WIN 1: Sleep Score ── -->
+    <div class="bg-[#0e0e1a] border border-[#60A5FA]/15 rounded-2xl p-4 md:p-8 mb-10" data-reveal="fade-up" style="box-shadow:0 0 60px rgba(96,165,250,0.05)">
+    <div class="grid grid-cols-2 gap-4 md:gap-10 items-center">
+      <!-- Mock UI -->
+      <div data-reveal="from-left">
+        <div class="bg-[#0a0a0e] border border-[#60A5FA]/20 rounded-2xl p-4 md:p-8" style="box-shadow:0 0 60px rgba(96,165,250,0.06)">
+          <div class="flex items-center justify-between mb-7">
+            <div>
+              <p class="text-[10px] text-gray-600 font-bold tracking-widest uppercase">Tuesday, 14 May</p>
+              <p class="text-lg font-semibold text-gray-100 mt-0.5">Your Sleep Score</p>
+            </div>
+            <span class="text-xs text-[#60A5FA]">Compare ↗</span>
+          </div>
+          <!-- big ring -->
+          <div class="flex justify-center mb-7">
+            <svg width="170" height="170" viewBox="0 0 170 170">
+              <circle cx="85" cy="85" r="70" fill="none" stroke="rgba(96,165,250,0.08)" stroke-width="11"/>
+              <circle cx="85" cy="85" r="70" fill="none" stroke="#60A5FA" stroke-width="11"
+                stroke-linecap="round" stroke-dasharray="440" stroke-dashoffset="53"
+                transform="rotate(-90 85 85)" style="filter:drop-shadow(0 0 8px rgba(96,165,250,0.7))"/>
+              <text x="85" y="78" text-anchor="middle" fill="white" font-size="42" font-weight="800" font-family="Inter,sans-serif">88</text>
+              <text x="85" y="96" text-anchor="middle" fill="rgba(255,255,255,0.3)" font-size="11" font-family="Inter,sans-serif" letter-spacing="2">SLEEP SCORE</text>
+              <text x="85" y="111" text-anchor="middle" fill="#60A5FA" font-size="9.5" font-family="Inter,sans-serif">Good night →</text>
+            </svg>
+          </div>
+          <!-- stats -->
+          <div class="grid grid-cols-3 gap-3 mb-5">
+            <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+              <p class="text-xl font-black text-[#60A5FA]">7h 2m</p>
+              <p class="text-[10px] text-gray-600 mt-0.5">Total sleep</p>
+            </div>
+            <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+              <p class="text-xl font-black text-gray-100">72 bpm</p>
+              <p class="text-[10px] text-gray-600 mt-0.5">Avg heart rate</p>
+            </div>
+            <div class="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+              <p class="text-xl font-black text-[#A78BFA]">1h 42m</p>
+              <p class="text-[10px] text-gray-600 mt-0.5">REM sleep</p>
+            </div>
+          </div>
+          <!-- why breakdown -->
+          <div class="bg-[#60A5FA]/5 border border-[#60A5FA]/15 rounded-xl p-4">
+            <p class="text-[10px] font-bold text-[#60A5FA] uppercase tracking-wider mb-2.5">Why your score is 88</p>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-400">Deep sleep</span>
+                <span class="text-xs font-semibold text-green-400">+12% vs avg</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-400">Movement events</span>
+                <span class="text-xs font-semibold text-gray-300">Low</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-400">HRV score</span>
+                <span class="text-xs font-semibold text-yellow-400">−4% vs avg</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Text -->
+      <div data-reveal="from-right">
+        <div class="inline-block px-3 py-1.5 rounded-full border border-[#60A5FA]/30 bg-[#60A5FA]/5 mb-6">
+          <span class="text-[10px] font-bold text-[#60A5FA] tracking-widest uppercase">PM Win #1 · Applied ML</span>
+        </div>
+        <h3 class="text-xl md:text-3xl lg:text-4xl text-gray-100 mb-4" style="font-family:'Instrument Serif',Georgia,serif">The Proprietary Sleep Score</h3>
+        <p class="text-sm text-gray-400 leading-relaxed mb-6">
+          Four biometric streams, one number: 0–100. The hard part was defining what it <em>means</em> — and what to do about it.
+        </p>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-[#60A5FA] mt-2 flex-shrink-0"></div>
+            <p class="text-sm text-gray-400">HRV + respiratory rate + movement + sleep stage data synthesised into one trusted number</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-[#60A5FA] mt-2 flex-shrink-0"></div>
+            <p class="text-sm text-gray-400">Ran 50+ user interviews and A/B tests to iterate on how the score is displayed and explained</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-[#60A5FA] mt-2 flex-shrink-0"></div>
+            <p class="text-sm text-gray-400">Reduced false movement alerts by 40% through iterative firmware and app co-tuning</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- ── AI WIN 2: GenAI Coach ── -->
+    <div class="bg-[#0e0e1a] border border-[#A78BFA]/15 rounded-2xl p-4 md:p-8 mb-10" data-reveal="fade-up" style="box-shadow:0 0 60px rgba(167,139,250,0.05)">
+    <div class="grid grid-cols-2 gap-4 md:gap-10 items-center">
+      <!-- Text (right col on desktop, first on mobile) -->
+      <div data-reveal="from-right" class="order-2">
+        <div class="inline-block px-3 py-1.5 rounded-full border border-[#A78BFA]/30 bg-[#A78BFA]/5 mb-6">
+          <span class="text-[10px] font-bold text-[#A78BFA] tracking-widest uppercase">PM Win #2 · GenAI</span>
+        </div>
+        <h3 class="text-xl md:text-3xl lg:text-4xl text-gray-100 mb-4" style="font-family:'Instrument Serif',Georgia,serif">Your Personal Sleep Coach</h3>
+        <p class="text-sm text-gray-400 leading-relaxed mb-6">
+          An LLM coaching you on <em>your own</em> night's data — with guardrails that keep it medically safe.
+        </p>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-[#A78BFA] mt-2 flex-shrink-0"></div>
+            <p class="text-sm text-gray-400">Yesterday vs today comparison — and a weekly trend view of your sleep patterns</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-[#A78BFA] mt-2 flex-shrink-0"></div>
+            <p class="text-sm text-gray-400">Conversational: "You sleep 18 minutes less on weeknights — here's why that matters"</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-1.5 h-1.5 rounded-full bg-[#A78BFA] mt-2 flex-shrink-0"></div>
+            <p class="text-sm text-gray-400">One of the earliest consumer GenAI features at a D2C brand in India at that time</p>
+          </div>
+        </div>
+      </div>
+      <!-- GenAI chat mock (left col on desktop) -->
+      <div data-reveal="from-left" class="order-1">
+        <div class="bg-[#0a0a0e] border border-[#A78BFA]/20 rounded-2xl p-4 md:p-6" style="box-shadow:0 0 60px rgba(167,139,250,0.06)">
+          <div class="flex items-center gap-3 mb-5 pb-4 border-b border-white/[0.06]">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#A78BFA] to-[#60A5FA] flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-100">SensAI Coach</p>
+              <p class="text-xs text-[#A78BFA]">Powered by AI · 6:02 AM</p>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div class="flex gap-3">
+              <div class="w-6 h-6 rounded-full bg-[#A78BFA]/20 flex-shrink-0 flex items-center justify-center mt-0.5">
+                <div class="w-2 h-2 rounded-full bg-[#A78BFA]"></div>
+              </div>
+              <div class="bg-[#A78BFA]/10 border border-[#A78BFA]/15 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
+                <p class="text-sm text-gray-200 leading-relaxed">Your REM was <span class="text-[#A78BFA] font-semibold">12% higher</span> than last week — that's the cognitive restoration phase. Deep sleep was on point at 22%.</p>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <div class="w-6 h-6 rounded-full bg-[#A78BFA]/20 flex-shrink-0 flex items-center justify-center mt-0.5">
+                <div class="w-2 h-2 rounded-full bg-[#A78BFA]"></div>
+              </div>
+              <div class="bg-[#A78BFA]/10 border border-[#A78BFA]/15 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
+                <p class="text-sm text-gray-200 leading-relaxed">Your HRV was 4% below your 30-day average — a sign of mild fatigue accumulation. Tonight, try a 10-min wind-down at 10pm, <span class="text-yellow-400 font-semibold">no screens.</span></p>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <div class="w-6 h-6 rounded-full bg-[#A78BFA]/20 flex-shrink-0 flex items-center justify-center mt-0.5">
+                <div class="w-2 h-2 rounded-full bg-[#A78BFA]"></div>
+              </div>
+              <div class="bg-white/[0.03] border border-white/[0.06] rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%]">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">This Week</p>
+                <div class="flex gap-1 items-end h-7">
+                  <div class="flex-1 rounded-t-sm" style="background:#60A5FA;opacity:0.4;height:60%"></div>
+                  <div class="flex-1 rounded-t-sm" style="background:#60A5FA;opacity:0.5;height:75%"></div>
+                  <div class="flex-1 rounded-t-sm" style="background:#60A5FA;opacity:0.3;height:45%"></div>
+                  <div class="flex-1 rounded-t-sm" style="background:#60A5FA;opacity:0.6;height:85%"></div>
+                  <div class="flex-1 rounded-t-sm" style="background:#60A5FA;opacity:0.4;height:55%"></div>
+                  <div class="flex-1 rounded-t-sm" style="background:#A78BFA;opacity:0.9;height:100%"></div>
+                  <div class="flex-1 rounded-t-sm" style="background:#A78BFA;opacity:0.75;height:90%"></div>
+                </div>
+                <div class="flex justify-between mt-1"><span class="text-[8px] text-gray-600">Mon</span><span class="text-[8px] text-gray-600">Sun</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-5 flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3">
+            <p class="text-sm text-gray-600 flex-1">Ask your sleep coach...</p>
+            <div class="w-6 h-6 rounded-full bg-[#A78BFA]/30 flex items-center justify-center">
+              <svg class="w-3 h-3 text-[#A78BFA]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- ── AI WIN 3: A/B testing & iteration ── -->
+    <div class="bg-[#0e0e1a] border border-[#1EE9B6]/15 rounded-2xl p-4 md:p-10" data-reveal="flip" style="box-shadow:0 0 60px rgba(30,233,182,0.05)">
+      <div class="grid grid-cols-2 gap-4 md:gap-10 items-center">
+        <div>
+          <div class="inline-block px-3 py-1.5 rounded-full border border-[#1EE9B6]/30 bg-[#1EE9B6]/5 mb-6">
+            <span class="text-[10px] font-bold text-[#1EE9B6] tracking-widest uppercase">PM Win #3 · Experimentation</span>
+          </div>
+          <h3 class="text-xl md:text-3xl lg:text-4xl text-gray-100 mb-4" style="font-family:'Instrument Serif',Georgia,serif">Iterated Until It Was Right</h3>
+          <p class="text-sm text-gray-400 leading-relaxed mb-6">
+            V1 tested poorly — users didn't know what to do with the number. 50+ interviews and structured A/B tests later, the UI was rebuilt from scratch.
+          </p>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <div class="w-1.5 h-1.5 rounded-full bg-[#1EE9B6] mt-2 flex-shrink-0"></div>
+              <p class="text-sm text-gray-400">40% fewer false movement alerts — iterative firmware + app co-tuning</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-1.5 h-1.5 rounded-full bg-[#1EE9B6] mt-2 flex-shrink-0"></div>
+              <p class="text-sm text-gray-400">Competitive teardown of Oura, Fitbit, Samsung Health, Apple Health</p>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-1.5 h-1.5 rounded-full bg-[#1EE9B6] mt-2 flex-shrink-0"></div>
+              <p class="text-sm text-gray-400">Cohort testing on how the score is displayed, explained, and acted upon</p>
+            </div>
+          </div>
+        </div>
+        <!-- A/B visual -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-white/[0.03] border border-red-500/20 rounded-xl p-5 text-center">
+            <p class="text-[9px] font-bold text-red-400 uppercase tracking-wider mb-4">Version A</p>
+            <div class="w-16 h-16 rounded-full border-4 border-gray-700 flex items-center justify-center mx-auto mb-4">
+              <span class="text-xl font-black text-gray-500">88</span>
+            </div>
+            <p class="text-[9px] text-gray-600 leading-relaxed">Plain number. No context. Users confused — "Is 88 good?"</p>
+          </div>
+          <div class="bg-white/[0.03] border border-green-500/20 rounded-xl p-5 text-center">
+            <p class="text-[9px] font-bold text-green-400 uppercase tracking-wider mb-4">Version B ✓</p>
+            <div class="w-16 h-16 rounded-full border-4 border-[#60A5FA] flex items-center justify-center mx-auto mb-4" style="box-shadow:0 0 12px rgba(96,165,250,0.4)">
+              <span class="text-xl font-black text-[#60A5FA]">88</span>
+            </div>
+            <p class="text-[9px] text-gray-400 leading-relaxed">Ring + why + what to do = clear, actionable insight.</p>
+          </div>
+          <div class="col-span-2 bg-[#1EE9B6]/5 border border-[#1EE9B6]/15 rounded-xl p-4 text-center">
+            <p class="text-xs text-gray-500">Shipped after multiple A/B test rounds across user cohorts</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     IMPACT
+════════════════════════════════════════════ -->
+<section class="pt-8 pb-24 px-6 bg-[#0c0c12] border-t border-white/[0.06]" id="impact">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="mb-10">
+      <p class="text-[11px] font-bold tracking-[0.15em] uppercase text-[#60A5FA] mb-3" data-reveal="fade-up">The Impact</p>
+      <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-2 text-gray-100"
+          style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">Real world
+        <em style="font-style:italic;color:#60A5FA">impact</em></h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      <div class="bg-[#0a0a0e] border border-white/[0.07] rounded-2xl p-8 tilt-card" data-reveal="spring" data-delay="1" data-tilt data-glow="#60A5FA" style="box-shadow:0 0 40px rgba(96,165,250,0.04)">
+        <div class="text-[52px] font-black text-[#60A5FA] leading-none mb-3"
+             data-counter data-prefix="₹" data-value="4" data-suffix="Cr+">₹4Cr+</div>
+        <p class="text-sm text-gray-500 leading-relaxed">New revenue generated in the first 12 months after launch</p>
+      </div>
+      <div class="bg-[#0a0a0e] border border-white/[0.07] rounded-2xl p-8 tilt-card" data-reveal="spring" data-delay="2" data-tilt data-glow="#A78BFA">
+        <div class="text-[52px] font-black text-gray-100 leading-none mb-3"
+             data-counter data-value="12" data-suffix="mo">12mo</div>
+        <p class="text-sm text-gray-500 leading-relaxed">From first wireframe to live on App Store and Play Store</p>
+      </div>
+      <div class="bg-[#0a0a0e] border border-white/[0.07] rounded-2xl p-8 tilt-card" data-reveal="spring" data-delay="3" data-tilt data-glow="#1EE9B6">
+        <div class="text-[52px] font-black text-[#1EE9B6] leading-none mb-3">New</div>
+        <p class="text-sm text-gray-500 leading-relaxed">Category created — TSC's first AI product. Zero playbook, zero precedent.</p>
+      </div>
+    </div>
+
+    <!-- Closing quote -->
+    <div class="bg-[#0a0a0e] border border-[#60A5FA]/15 rounded-2xl p-8 md:p-12 text-center" data-reveal="blur" style="box-shadow:0 0 80px rgba(96,165,250,0.03)">
+      <div class="text-[#60A5FA]/25 text-5xl font-black leading-none mb-6" style="font-family:'Instrument Serif',Georgia,serif">"</div>
+      <p class="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed max-w-3xl mx-auto"
+         style="font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-style:italic">
+        The Sleep Company's first AI product — from zero to Rs4 crore in 12 months. This project proved that hardware brands can successfully transition to intelligence-first software ecosystems with the right product vision.
+      </p>
+      <div class="flex items-center justify-center gap-3">
+        <div class="w-px h-8 bg-white/10"></div>
+        <p class="text-sm text-gray-500">Sharanya Chaturvedi · Senior Product Manager · The Sleep Company</p>
+        <div class="w-px h-8 bg-white/10"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     CTA
+════════════════════════════════════════════ -->
+<section class="pt-8 pb-24 px-6 bg-[#0a0a0e] border-t border-white/[0.06] text-center" id="contact">
+  <div class="max-w-2xl mx-auto">
+    <h2 class="text-4xl md:text-[52px] leading-[1.07] tracking-[-0.5px] mb-6 text-gray-100"
+        style="font-family:'Instrument Serif',Georgia,serif;font-weight:400" data-reveal="spring">Want to talk about this?</h2>
+    <p class="text-base md:text-lg text-gray-400 mb-10 leading-relaxed" data-reveal="fade-up" data-delay="1">
+      I'm open to Senior PM and Group PM roles — particularly in AI products, consumer tech, and IoT. Based in Mumbai, open to relocation.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16" data-reveal="spring" data-delay="2">
+      <a href="mailto:chaturvedisharanya@gmail.com" class="bg-white text-black text-[14px] font-bold px-6 py-3.5 rounded-xl hover:bg-gray-100 transition-colors">Send me an email →</a>
+      <a href="https://linkedin.com/in/chaturvedisharanya" target="_blank" rel="noopener noreferrer"
+         class="text-[14px] font-bold px-6 py-3.5 rounded-xl border border-white/20 hover:border-[#60A5FA]/50 hover:text-[#60A5FA] text-gray-300 transition-all">LinkedIn</a>
+    </div>
+    <!-- Next case study -->
+    <div class="border-t border-white/[0.06] pt-10" data-reveal="fade-up" data-delay="3">
+      <p class="text-[11px] font-bold tracking-[0.15em] uppercase text-gray-600 mb-6">Next case study</p>
+      <a href="/technician-platform/" class="group inline-flex flex-col items-center gap-2 hover:text-[#1EE9B6] transition-colors">
+        <div class="inline-block px-4 py-2 rounded-full border border-[#1EE9B6]/30 bg-[#1EE9B6]/5 group-hover:bg-[#1EE9B6]/10 transition-colors">
+          <span class="text-[11px] font-bold text-[#1EE9B6] tracking-wider uppercase">Field Ops · iOS & Android + Web</span>
+        </div>
+        <p class="text-2xl md:text-3xl text-gray-100 group-hover:text-[#1EE9B6] transition-colors"
+           style="font-family:'Instrument Serif',Georgia,serif">Technician Platform →</p>
+        <p class="text-sm text-gray-500">1,50,000+ field operations on a platform I built from scratch</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer class="bg-[#07070b] border-t border-white/[0.06] px-6 py-12">
+  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+    <a href="/" class="text-xs text-gray-600 hover:text-gray-300 transition-colors">← Back to portfolio</a>
+    <span class="text-xs text-gray-600">SensAI Case Study · Sharanya Chaturvedi · 2025</span>
+    <div class="flex items-center gap-6 text-xs text-gray-600">
+      <a href="mailto:chaturvedisharanya@gmail.com" class="hover:text-gray-300 transition-colors">Email</a>
+      <a href="https://linkedin.com/in/chaturvedisharanya" target="_blank" rel="noopener noreferrer" class="hover:text-gray-300 transition-colors">LinkedIn</a>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+/* ── CURSOR GLOW ── */
+(function(){
+  const glow = document.getElementById('cursor-glow');
+  const hw = 140;
+  document.addEventListener('mousemove', e => {
+    glow.style.transform = `translate(${e.clientX-hw}px,${e.clientY-hw}px)`;
+  }, {passive:true});
+  document.addEventListener('mouseleave', () => { glow.style.opacity='0'; });
+  document.addEventListener('mouseenter', () => { glow.style.opacity='1'; });
+})();
+
+/* ── SCROLL REVEAL ── */
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in'); revealObs.unobserve(e.target); } });
+}, { threshold:0.12, rootMargin:'0px 0px -40px 0px' });
+document.querySelectorAll('[data-reveal]').forEach(el => revealObs.observe(el));
+
+/* ── COUNT-UP ── */
+function runCounter(el) {
+  const target = parseFloat(el.dataset.value);
+  const prefix = el.dataset.prefix || '';
+  const suffix = el.dataset.suffix || '';
+  const t0 = performance.now();
+  (function tick(now){
+    const p = Math.min((now-t0)/1600, 1);
+    const ease = 1 - Math.pow(2,-10*p);
+    el.textContent = prefix + Math.round(target*ease) + suffix;
+    if(p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+const counterObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting){ runCounter(e.target); counterObs.unobserve(e.target); } });
+}, {threshold:0.5});
+document.querySelectorAll('[data-counter]').forEach(el => counterObs.observe(el));
+
+/* ── 3D TILT ── */
+document.querySelectorAll('[data-tilt]').forEach(card => {
+  const gc = card.dataset.glow || '#fff';
+  const r=parseInt(gc.slice(1,3),16), g=parseInt(gc.slice(3,5),16), b=parseInt(gc.slice(5,7),16);
+  card.addEventListener('mouseenter', () => { card.style.transition='transform .15s ease, box-shadow .3s ease'; });
+  card.addEventListener('mouseleave', () => {
+    card.style.transition='transform .5s cubic-bezier(0.16,1,0.3,1), box-shadow .5s ease';
+    card.style.transform='perspective(900px) rotateX(0deg) rotateY(0deg) translateZ(0)';
+    card.style.boxShadow='none';
+  });
+  card.addEventListener('mousemove', e => {
+    const rect=card.getBoundingClientRect();
+    const x=(e.clientX-rect.left)/rect.width-0.5;
+    const y=(e.clientY-rect.top)/rect.height-0.5;
+    card.style.transform=`perspective(900px) rotateY(${x*7}deg) rotateX(${-y*7}deg) translateZ(10px)`;
+    card.style.boxShadow=`0 20px 60px rgba(${r},${g},${b},0.18)`;
+  });
+});
+
+/* ── SCROLL PROGRESS ── */
+const pb = document.getElementById('scroll-progress');
+window.addEventListener('scroll', () => {
+  const s = document.body.scrollTop || document.documentElement.scrollTop;
+  const h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  pb.style.transform = `scaleX(${s/h})`;
+}, {passive:true});
+
+/* ── MOBILE MENU ── */
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobile-menu');
+const mobileClose = document.getElementById('mobile-close');
+function openMobileMenu()  { hamburger.classList.add('open'); mobileMenu.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeMobileMenu() { hamburger.classList.remove('open'); mobileMenu.classList.remove('open'); document.body.style.overflow=''; }
+hamburger.addEventListener('click', openMobileMenu);
+mobileClose.addEventListener('click', closeMobileMenu);
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeMobileMenu(); });
+</script>
+</body>
+</html>

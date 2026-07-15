@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Case Study: Scaling Field Ops | Sharanya Chaturvedi</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary":           "#93ffd8",
+          "primary-container": "#1ee9b6",
+          "secondary":         "#dab9ff",
+          "surface":           "#131317",
+          "surface-card":      "#0e0e1a",
+          "surface-section":   "#0c0c12",
+          "surface-container-lowest": "#0e0e12",
+          "on-surface":        "#e4e1e7",
+          "text-secondary":    "#9ca3af",
+          "text-tertiary":     "#6b7280",
+          "status-critical":   "#fb7185",
+          "status-info":       "#60a5fa",
+          "status-warning":    "#f59e0b",
+          "background":        "#131317"
+        },
+        fontFamily: {
+          "display-hero":   ["Instrument Serif","serif"],
+          "section-title":  ["Instrument Serif","serif"],
+          "body-base":      ["Inter","sans-serif"],
+          "label-ui":       ["Inter","sans-serif"]
+        }
+      }
+    }
+  }
+</script>
+<!-- reveal animations only hide content when JS is running; without JS everything stays visible -->
+<script>document.documentElement.classList.add('js');</script>
+<style>
+  *{box-sizing:border-box;}
+  body{background:#0a0a0e;color:#e4e1e7;-webkit-font-smoothing:antialiased;font-family:'Inter',Arial,sans-serif;overflow-x:hidden;scroll-behavior:smooth;}
+  h1,h2,h3,h4{font-family:'Instrument Serif',Georgia,serif;font-weight:400;}
+  ::selection{background:rgba(30,233,182,0.25);color:#fff;}
+
+  /* Glass */
+  .glass{background:rgba(14,14,26,0.9);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.07);transition:border-color .3s;}
+  .glass:hover{border-color:rgba(147,255,216,0.18);}
+
+  /* Scroll reveal (hidden states scoped to .js so nothing stays invisible if JS fails) */
+  .js .reveal{opacity:0;transform:translateY(28px);transition:opacity .75s cubic-bezier(.16,1,.3,1),transform .75s cubic-bezier(.16,1,.3,1);}
+  .reveal.in{opacity:1;transform:none;}
+  .js .reveal-left{opacity:0;transform:translateX(-32px);transition:opacity .7s ease,transform .7s ease;}
+  .reveal-left.in{opacity:1;transform:none;}
+  .js .reveal-right{opacity:0;transform:translateX(32px);transition:opacity .7s ease,transform .7s ease;}
+  .reveal-right.in{opacity:1;transform:none;}
+
+  /* Staggered children */
+  .js .stagger > *{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease;}
+  .stagger.in > *:nth-child(1){opacity:1;transform:none;transition-delay:.05s;}
+  .stagger.in > *:nth-child(2){opacity:1;transform:none;transition-delay:.15s;}
+  .stagger.in > *:nth-child(3){opacity:1;transform:none;transition-delay:.25s;}
+  .stagger.in > *:nth-child(4){opacity:1;transform:none;transition-delay:.35s;}
+  .stagger.in > *:nth-child(5){opacity:1;transform:none;transition-delay:.45s;}
+
+  /* Scrollbar hide */
+  .no-scroll::-webkit-scrollbar{display:none;}
+  .no-scroll{-ms-overflow-style:none;scrollbar-width:none;}
+
+  /* Carousel */
+  .c-slide{position:absolute;inset:6px;opacity:0;transition:opacity .5s ease;pointer-events:none;}
+  .c-slide.on{opacity:1;pointer-events:auto;}
+  .c-dot{width:6px;height:6px;border-radius:9999px;background:rgba(255,255,255,0.25);cursor:pointer;transition:all .3s;}
+  .c-dot.on{width:18px;background:#1ee9b6;}
+
+  /* Progress bar */
+  .prog-bar{height:3px;border-radius:9999px;background:rgba(255,255,255,0.07);overflow:hidden;margin-top:14px;}
+  .prog-fill{height:100%;width:0;border-radius:9999px;transition:width 1.5s cubic-bezier(0.25,1,0.5,1);}
+  .prog-fill.go{width:var(--p);}
+
+  /* Animations */
+  @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .float-num{animation:floatY 4s ease-in-out infinite;display:inline-block;}
+  @keyframes glowPulse{0%,100%{box-shadow:0 0 0 0 rgba(30,233,182,0)}50%{box-shadow:0 0 28px 4px rgba(30,233,182,0.10)}}
+  .glow-card{animation:glowPulse 4s ease-in-out infinite;}
+  @keyframes countUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .num-appear{animation:countUp .5s ease forwards;}
+
+  /* Text gradient */
+  .grad{background:linear-gradient(135deg,#93ffd8 0%,#1ee9b6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+
+  /* Decision stagger */
+  .dec-up{transform:translateY(-52px);}
+  .dec-dn{transform:translateY(52px);}
+  .dec-card{transition:transform .35s cubic-bezier(.4,0,.2,1);}
+  .dec-card:hover.dec-up{transform:translateY(-72px);}
+  .dec-card:hover.dec-dn{transform:translateY(72px);}
+
+  /* Timeline accent */
+  .tl-line::before{content:'';position:absolute;left:0;top:0;width:2px;height:100%;background:rgba(30,233,182,0.2);}
+  .tl-dot::before{content:'';position:absolute;left:-5px;top:4px;width:12px;height:12px;border-radius:9999px;background:#1ee9b6;}
+
+  /* Nav / scroll progress / mobile menu */
+  section[id]{scroll-margin-top:70px;}
+  #scroll-progress{transform-origin:left;transform:scaleX(0);}
+  .nav-link.active{color:#1ee9b6 !important;}
+  #mobile-menu{display:none;}
+  #mobile-menu.open{display:flex;}
+  #hamburger .hline{display:block;width:20px;height:2px;background:#fff;border-radius:2px;transition:all .25s ease;}
+  #hamburger.open .hline:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  #hamburger.open .hline:nth-child(2){opacity:0;transform:scaleX(0);}
+  #hamburger.open .hline:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+</style>
+</head>
+<body>
+
+<!-- SCROLL PROGRESS -->
+<div class="fixed top-0 left-0 w-full h-0.5 z-[60]">
+  <div class="h-full" id="scroll-progress" style="background:#1ee9b6;"></div>
+</div>
+
+<!-- NAV -->
+<nav class="sticky top-0 z-40 border-b border-white/[0.07] backdrop-blur-xl" style="background:rgba(10,10,14,0.92);">
+  <div class="max-w-7xl mx-auto px-6 h-[62px] flex items-center justify-between gap-4">
+    <a href="/" class="flex-shrink-0">
+      <div style="font-family:'Peace Sans',sans-serif;line-height:0.92;color:#f3f4f6;font-size:17px;font-weight:400;letter-spacing:0.01em">
+        <span style="display:block">Sharanya</span><span style="display:block">Chaturvedi</span>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-8">
+      <a href="/#work" class="text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">← All Work</a>
+      <span class="text-[13px] font-semibold" style="color:#1ee9b6;">Field Ops</span>
+      <a href="#story"     data-spy="story"     class="nav-link text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">The Story</a>
+      <a href="#gallery"   data-spy="gallery"   class="nav-link text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">The Product</a>
+      <a href="#decisions" data-spy="decisions" class="nav-link text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">Decisions</a>
+      <a href="#impact"    data-spy="impact"    class="nav-link text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">Impact</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="mailto:chaturvedisharanya@gmail.com" class="flex-shrink-0 bg-white text-black text-[13px] font-bold px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">Let's talk →</a>
+      <button id="hamburger" class="md:hidden flex flex-col justify-center items-center gap-[5px] w-9 h-9 rounded-lg hover:bg-white/5 transition-colors" aria-label="Open menu">
+        <span class="hline"></span><span class="hline"></span><span class="hline"></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div id="mobile-menu" class="fixed inset-0 z-50 bg-[#0a0a0e] flex-col items-center justify-center gap-8">
+  <button id="mobile-close" class="absolute top-5 right-6 text-gray-400 hover:text-white text-xl transition-colors" aria-label="Close">✕</button>
+  <a href="/#work"     onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-primary-container transition-colors" style="font-family:'Instrument Serif',Georgia,serif">← All Work</a>
+  <a href="#story"     onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-primary-container transition-colors" style="font-family:'Instrument Serif',Georgia,serif">The Story</a>
+  <a href="#gallery"   onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-primary-container transition-colors" style="font-family:'Instrument Serif',Georgia,serif">The Product</a>
+  <a href="#decisions" onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-primary-container transition-colors" style="font-family:'Instrument Serif',Georgia,serif">Decisions</a>
+  <a href="#impact"    onclick="closeMobileMenu()" class="text-[42px] text-gray-100 hover:text-primary-container transition-colors" style="font-family:'Instrument Serif',Georgia,serif">Impact</a>
+  <a href="mailto:chaturvedisharanya@gmail.com" class="mt-6 bg-white text-black text-[14px] font-bold px-7 py-3.5 rounded-xl hover:bg-gray-100 transition-colors">Let's talk →</a>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     1. HERO — original layout + stitch icons
+═══════════════════════════════════════════ -->
+<section class="relative border-b border-white/[0.06]" style="background:#0a0a0e;overflow-x:clip;">
+
+  <!-- Teal ambient glow -->
+  <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 50% 80% at 0% 50%,rgba(30,233,182,0.10) 0%,transparent 55%);"></div>
+
+  <!-- hero-tech image — right bleed, fades left + bottom -->
+  <div class="absolute bottom-0 hidden lg:block pointer-events-none" style="top:6rem;width:64%;right:-5px;">
+    <img src="images/hero-tech.png" alt="" class="w-full h-full object-contain object-right-top" style="opacity:0.92;">
+    <div class="absolute inset-0" style="background:linear-gradient(to right,#0a0a0e 0%,rgba(10,10,14,0.75) 25%,rgba(10,10,14,0.2) 55%,transparent 80%);"></div>
+    <div class="absolute bottom-0 inset-x-0" style="height:35%;background:linear-gradient(to bottom,transparent,#0a0a0e);"></div>
+  </div>
+
+  <!-- Content -->
+  <div class="relative max-w-7xl mx-auto px-6 py-16 md:py-24">
+    <div class="max-w-[520px]">
+
+      <!-- Tags -->
+      <div class="flex flex-wrap gap-2 mb-6 reveal" style="transition-delay:.05s;">
+        <span class="px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase" style="border:1px solid rgba(30,233,182,0.3);background:rgba(30,233,182,0.05);color:#1ee9b6;">0→1 Build</span>
+        <span class="px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase" style="border:1px solid rgba(30,233,182,0.3);background:rgba(30,233,182,0.05);color:#1ee9b6;">Field Ops</span>
+        <span class="px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase" style="border:1px solid rgba(30,233,182,0.3);background:rgba(30,233,182,0.05);color:#1ee9b6;">iOS &amp; Android + Web</span>
+        <span class="px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase" style="border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#6b7280;">The Sleep Company</span>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="text-4xl md:text-5xl lg:text-[58px] leading-[1.06] tracking-[-1px] mb-5 text-gray-100 reveal" style="transition-delay:.1s;">
+        Scaling Field Ops<br>
+        <em style="font-style:italic;color:#6b7280;">from WhatsApp to</em><br>
+        <span class="grad">150k Jobs @ ₹0 Cost</span>
+      </h1>
+
+      <!-- Subline -->
+      <p class="text-base text-gray-400 mb-8 leading-relaxed reveal" style="transition-delay:.18s;">
+        From chaotic spreadsheets to a proprietary routing engine running a nationwide field workforce.
+      </p>
+
+      <!-- Stats grid — original sizing, stitch icons -->
+      <div class="grid grid-cols-2 gap-3 mb-8 stagger" style="transition-delay:.25s;">
+
+        <div class="glass rounded-2xl p-4 backdrop-blur-sm group">
+          <span class="material-symbols-outlined text-xl mb-2 block group-hover:scale-110 transition-transform" style="color:#1ee9b6;">rocket_launch</span>
+          <div class="text-[30px] font-black leading-none mb-1" style="color:#1ee9b6;">1,50,000+</div>
+          <div class="text-xs text-gray-500">Total jobs processed</div>
+        </div>
+
+        <div class="glass rounded-2xl p-4 backdrop-blur-sm group">
+          <span class="material-symbols-outlined text-xl mb-2 block group-hover:scale-110 transition-transform" style="color:#dab9ff;">verified</span>
+          <div class="text-[30px] font-black leading-none mb-1 count-el" data-val="96.4" data-sfx="%" style="color:#1ee9b6;">96.4%</div>
+          <div class="text-xs text-gray-500">Job completion rate</div>
+        </div>
+
+        <div class="glass rounded-2xl p-4 backdrop-blur-sm group">
+          <span class="material-symbols-outlined text-xl mb-2 block group-hover:scale-110 transition-transform" style="color:#1ee9b6;">trending_down</span>
+          <div class="text-[30px] font-black leading-none mb-1 count-el" data-val="64" data-sfx="%" style="color:#1ee9b6;">64%</div>
+          <div class="text-xs text-gray-500">Reduction in install cost (₹700→₹250)</div>
+        </div>
+
+        <div class="glass rounded-2xl p-4 backdrop-blur-sm group">
+          <span class="material-symbols-outlined text-xl mb-2 block group-hover:scale-110 transition-transform" style="color:#1ee9b6;">currency_rupee</span>
+          <div class="text-[30px] font-black leading-none mb-1" style="color:#1ee9b6;">₹0</div>
+          <div class="text-xs text-gray-500">Platform running cost</div>
+        </div>
+
+      </div>
+
+      <!-- CTA -->
+      <div class="flex items-center gap-5 reveal" style="transition-delay:.35s;">
+        <a href="#story" class="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] hover:underline" style="color:#1ee9b6;">
+          Read the story
+          <span class="material-symbols-outlined text-base">arrow_downward</span>
+        </a>
+        <div class="h-px w-8" style="background:rgba(255,255,255,0.1);"></div>
+        <span class="text-[10px] uppercase tracking-widest text-gray-600 font-bold">7 min read</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     2. CONTEXT — stitch design, dropdown below stats
+═══════════════════════════════════════════ -->
+<section class="py-20 px-6 border-b border-white/[0.06]" style="background:#0c0c12;" id="story">
+  <div class="max-w-4xl mx-auto">
+    <div class="reveal">
+
+      <!-- Label -->
+      <span class="block text-[10px] font-bold tracking-[0.3em] uppercase mb-6" style="color:#fb7185;">The Context</span>
+
+      <!-- H2 — Instrument Serif, stitch sizing -->
+      <h2 class="text-4xl md:text-5xl lg:text-[52px] leading-[1.05] mb-8 text-gray-100">
+        Managing 2,000 monthly installs<br>on <em style="font-style:italic;color:#6b7280;">"hope and spreadsheets."</em>
+      </h2>
+
+      <!-- Opening line — always visible -->
+      <p class="text-lg text-gray-200 font-medium leading-relaxed mb-10" style="max-width:680px;">
+        Technicians ran on WhatsApp. Dispatchers juggled Google Sheets. Management had zero visibility into the last mile.
+      </p>
+
+      <!-- 6 Before-state stats (always visible) -->
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-8 mb-8 stagger">
+        <div>
+          <div class="text-[36px] font-black leading-none mb-1 count-el" data-val="0" data-sfx="%" style="color:#fb7185;">0%</div>
+          <div class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Real-time Visibility</div>
+        </div>
+        <div>
+          <div class="text-[36px] font-black leading-none mb-1" style="color:#fb7185;">8–12hrs</div>
+          <div class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Manual Data Entry</div>
+        </div>
+        <div>
+          <div class="text-[36px] font-black leading-none mb-1 count-el" data-val="35" data-sfx="%" style="color:#fb7185;">35%</div>
+          <div class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Job Redo Rate</div>
+        </div>
+        <div>
+          <div class="text-[36px] font-black leading-none mb-1" style="color:#fb7185;">High</div>
+          <div class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Manager Burnout</div>
+        </div>
+        <div>
+          <div class="text-[36px] font-black leading-none mb-1" style="color:#fb7185;">3+</div>
+          <div class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Calls per Install</div>
+        </div>
+        <div>
+          <div class="text-[36px] font-black leading-none mb-1" style="color:#fb7185;">₹700</div>
+          <div class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Cost per Install</div>
+        </div>
+      </div>
+
+      <!-- The story, in five lines -->
+      <div class="space-y-3 text-sm text-gray-400 leading-relaxed" style="max-width:680px;">
+        <p><span class="font-mono text-[11px] tracking-wider mr-3" style="color:rgba(30,233,182,0.45);">01</span>5 people, 2–3 hours every morning, assigning jobs from Excel — one row at a time.</p>
+        <p><span class="font-mono text-[11px] tracking-wider mr-3" style="color:rgba(30,233,182,0.45);">02</span>Technicians worked off WhatsApp addresses and called from personal numbers.</p>
+        <p><span class="font-mono text-[11px] tracking-wider mr-3" style="color:rgba(30,233,182,0.45);">03</span>Consumers got <strong class="text-gray-200">zero information</strong> — no confirmation, no ETA, no tracking.</p>
+        <p><span class="font-mono text-[11px] tracking-wider mr-3" style="color:rgba(30,233,182,0.45);">04</span>Every install generated 3+ support calls the agent couldn't answer.</p>
+        <p><span class="font-mono text-[11px] tracking-wider mr-3" style="color:rgba(30,233,182,0.45);">05</span>Every install cost <strong class="text-gray-200">₹700</strong>. No platform, no tracking, no data.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     3. PERSONAS — 4-col grid, problem quotes, stitch cards
+═══════════════════════════════════════════ -->
+<section class="py-20 px-6 border-b border-white/[0.06]" style="background:#0a0a0e;">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="reveal text-center mb-12">
+      <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-gray-600 mb-4">Research across the ecosystem</p>
+      <h2 class="text-3xl md:text-[42px] italic text-gray-100 mb-4">"I went on 10 installations before opening Figma."</h2>
+      <p class="text-sm text-gray-500 max-w-2xl mx-auto leading-relaxed">Installs, support shifts, ops meetings — four people to build for:</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger">
+
+      <!-- Technician -->
+      <div class="glass p-8 rounded-2xl flex flex-col" style="border-bottom:2px solid rgba(245,158,11,0.45);">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-8 flex-shrink-0" style="background:rgba(245,158,11,0.1);">
+          <span class="material-symbols-outlined text-base" style="color:#f59e0b;">engineering</span>
+        </div>
+        <h4 class="text-xl font-bold mb-4 text-gray-100">The Technician</h4>
+        <p class="text-sm text-gray-500 leading-relaxed flex-grow italic">
+          "Address from WhatsApp, plan my own day, prove completion on WhatsApp again. No tool."
+        </p>
+        <div class="mt-5 pt-4 border-t border-white/[0.06] text-[10px] uppercase tracking-widest font-bold" style="color:#f59e0b;">
+          Key Outcome: Offline-First Mobile App
+        </div>
+      </div>
+
+      <!-- Support Agent -->
+      <div class="glass p-8 rounded-2xl flex flex-col" style="border-bottom:2px solid rgba(30,233,182,0.45);">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-8 flex-shrink-0" style="background:rgba(30,233,182,0.08);">
+          <span class="material-symbols-outlined text-base" style="color:#1ee9b6;">support_agent</span>
+        </div>
+        <h4 class="text-xl font-bold mb-4 text-gray-100">The Support Agent</h4>
+        <p class="text-sm text-gray-500 leading-relaxed flex-grow italic">
+          "I piece together job status from WhatsApp threads. No real answer for the customer."
+        </p>
+        <div class="mt-5 pt-4 border-t border-white/[0.06] text-[10px] uppercase tracking-widest font-bold" style="color:#1ee9b6;">
+          Key Outcome: Real-time Job Tracking
+        </div>
+      </div>
+
+      <!-- Ops Manager -->
+      <div class="glass p-8 rounded-2xl flex flex-col" style="border-bottom:2px solid rgba(150,46,255,0.45);">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-8 flex-shrink-0" style="background:rgba(150,46,255,0.08);">
+          <span class="material-symbols-outlined text-base" style="color:#dab9ff;">dashboard_customize</span>
+        </div>
+        <h4 class="text-xl font-bold mb-4 text-gray-100">The Ops Manager</h4>
+        <p class="text-sm text-gray-500 leading-relaxed flex-grow italic">
+          "2 hours every morning assigning jobs across WhatsApp, Excel, and tickets."
+        </p>
+        <div class="mt-5 pt-4 border-t border-white/[0.06] text-[10px] uppercase tracking-widest font-bold" style="color:#dab9ff;">
+          Key Outcome: Auto-routing Dashboard
+        </div>
+      </div>
+
+      <!-- Consumer -->
+      <div class="glass p-8 rounded-2xl flex flex-col" style="border-bottom:2px solid rgba(96,165,250,0.45);">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-8 flex-shrink-0" style="background:rgba(96,165,250,0.08);">
+          <span class="material-symbols-outlined text-base" style="color:#60a5fa;">home</span>
+        </div>
+        <h4 class="text-xl font-bold mb-4 text-gray-100">The Customer</h4>
+        <p class="text-sm text-gray-500 leading-relaxed flex-grow italic">
+          "Took a half-day off. No confirmation, no ETA. Support doesn't know either."
+        </p>
+        <div class="mt-5 pt-4 border-t border-white/[0.06] text-[10px] uppercase tracking-widest font-bold" style="color:#60a5fa;">
+          Key Outcome: Uber-like Tracking Web-app
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     4. PRODUCT GALLERY — stitch UI, 3 cards, auto-carousel
+═══════════════════════════════════════════ -->
+<section class="py-20 px-6 border-b border-white/[0.06]" style="background:#0c0c12;" id="gallery">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="reveal mb-12 flex justify-between items-end flex-wrap gap-4">
+      <div>
+        <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-gray-600 mb-3">Product Ecosystem</p>
+        <h2 class="text-4xl md:text-5xl text-gray-100">From MVP to Engine</h2>
+      </div>
+    </div>
+
+    <!-- Product cards -->
+    <div class="flex overflow-x-auto gap-8 pb-6 no-scroll snap-x snap-mandatory">
+
+      <!-- CARD 01: Last-Mile Tool -->
+      <div class="snap-center flex-shrink-0" style="width:min(calc(100vw - 32px), 900px);">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-start lg:items-center p-6 lg:p-12 rounded-[28px] lg:rounded-[40px]" style="background:#0e0e1a;border:1px solid rgba(255,255,255,0.05);">
+
+          <!-- Carousel — phone aspect (mobile app screenshots) -->
+          <div class="carousel flex flex-col items-center">
+            <div class="relative overflow-hidden rounded-[30px] flex-shrink-0" style="aspect-ratio:9/19;height:420px;max-width:100%;background:#131317;border:1px solid rgba(255,255,255,0.12);box-shadow:0 12px 44px rgba(0,0,0,0.5),0 0 40px rgba(30,233,182,0.06);">
+              <div class="c-slide on" data-cap="Today's Jobs — order, time, location">
+                <img src="images/mobile-jobs.png" alt="Today's Jobs" class="w-full h-full object-contain object-center">
+              </div>
+              <div class="c-slide" data-cap="Status Update — Confirm / Reschedule / Unable / Reject">
+                <img src="images/mobile-confirmation.png" alt="Status Update" class="w-full h-full object-contain object-center">
+              </div>
+              <div class="c-slide" data-cap="Geo-capture — location locked on completion">
+                <img src="images/mobile-geo.png" alt="Geo Capture" class="w-full h-full object-contain object-center">
+              </div>
+              <div class="absolute inset-0 pointer-events-none" style="z-index:5;background:linear-gradient(to bottom right,rgba(30,233,182,0.14) 0%,transparent 60%);"></div>
+            </div>
+            <!-- Caption + dots below the phone -->
+            <div class="w-full mt-4 rounded-xl p-3.5 text-center" style="background:rgba(10,10,14,0.88);border:1px solid rgba(255,255,255,0.07);">
+              <p class="text-[10px] uppercase font-bold mb-1" style="color:#1ee9b6;">Technician App</p>
+              <p class="text-xs text-gray-400 italic carousel-cap">Today's Jobs — order, time, location</p>
+              <div class="flex gap-1.5 mt-2 carousel-dots justify-center">
+                <button class="c-dot on" aria-label="Slide 1"></button>
+                <button class="c-dot" aria-label="Slide 2"></button>
+                <button class="c-dot" aria-label="Slide 3"></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Text -->
+          <div>
+            <span class="text-6xl mb-6 block" style="font-family:'Instrument Serif',serif;color:#1ee9b6;">01</span>
+            <h3 class="text-4xl font-bold mb-6 text-gray-100">The Last-Mile Tool</h3>
+            <p class="text-sm text-gray-400 leading-relaxed mb-8">A React Native app that replaced 12 WhatsApp groups with one structured workflow. Built for variable tech-literacy — colour-coded CTAs, no reading required.</p>
+            <div class="space-y-4">
+              <div class="flex gap-4 items-start"><span class="material-symbols-outlined text-sm mt-1" style="color:#1ee9b6;">check_circle</span><div><p class="font-bold text-gray-100">Offline Data Sync</p><p class="text-sm text-gray-500">80% of data submitted offline, synced later — works in zero-signal basements.</p></div></div>
+              <div class="flex gap-4 items-start"><span class="material-symbols-outlined text-sm mt-1" style="color:#1ee9b6;">check_circle</span><div><p class="font-bold text-gray-100">Mandatory Geo-capture</p><p class="text-sm text-gray-500">No GPS lock, no completion — kills ghost jobs.</p></div></div>
+              <div class="flex gap-4 items-start"><span class="material-symbols-outlined text-sm mt-1" style="color:#1ee9b6;">check_circle</span><div><p class="font-bold text-gray-100">One-tap Call Masking</p><p class="text-sm text-gray-500">Central number — personal numbers never exposed.</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 02: Admin Control Tower -->
+      <div class="snap-center flex-shrink-0" style="width:min(calc(100vw - 32px), 900px);">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-start lg:items-center p-6 lg:p-12 rounded-[28px] lg:rounded-[40px]" style="background:#0e0e1a;border:1px solid rgba(255,255,255,0.05);">
+
+          <!-- Carousel — desktop aspect (web dashboard screenshots) -->
+          <div class="carousel">
+            <div class="relative overflow-hidden rounded-2xl w-full" style="aspect-ratio:16/10;background:#131317;border:1px solid rgba(255,255,255,0.1);">
+              <div class="c-slide on" data-cap="All Jobs Dashboard — the central ops view">
+                <img src="images/admin-alljobs.png" alt="All Jobs" class="w-full h-full object-contain object-center" onerror="this.style.display='none'">
+              </div>
+              <div class="c-slide" data-cap="Installation Calendar — day/week/month view">
+                <img src="images/admin-calendar.png" alt="Calendar" class="w-full h-full object-contain object-center" onerror="this.style.display='none'">
+              </div>
+              <div class="c-slide" data-cap="Roles &amp; Permissions — granular access, 5 roles">
+                <img src="images/admin-roles.png" alt="Roles" class="w-full h-full object-contain object-center" onerror="this.style.display='none'">
+              </div>
+              <div class="absolute inset-0 pointer-events-none" style="z-index:5;background:linear-gradient(to bottom right,rgba(218,185,255,0.14) 0%,transparent 60%);"></div>
+            </div>
+            <div class="mt-4 rounded-xl p-3.5" style="background:rgba(10,10,14,0.88);border:1px solid rgba(255,255,255,0.07);">
+              <p class="text-[10px] uppercase font-bold mb-1" style="color:#dab9ff;">Ops Dashboard</p>
+              <p class="text-xs text-gray-400 italic carousel-cap">All Jobs Dashboard — the central ops view</p>
+              <div class="flex gap-1.5 mt-2 carousel-dots">
+                <button class="c-dot on" aria-label="Slide 1"></button>
+                <button class="c-dot" aria-label="Slide 2"></button>
+                <button class="c-dot" aria-label="Slide 3"></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Text -->
+          <div>
+            <span class="text-6xl mb-6 block" style="font-family:'Instrument Serif',serif;color:#dab9ff;">02</span>
+            <h3 class="text-4xl font-bold mb-6 text-gray-100">Admin Control Tower</h3>
+            <p class="text-sm text-gray-400 leading-relaxed mb-8">The brain of the operation. A custom distance matrix assigns 200+ jobs daily — one click replaces the morning Excel session.</p>
+            <div class="space-y-4">
+              <div class="flex gap-4 items-start"><span class="material-symbols-outlined text-sm mt-1" style="color:#dab9ff;">check_circle</span><div><p class="font-bold text-gray-100">Proximity Auto-assignment</p><p class="text-sm text-gray-500">Nearest qualified tech, assigned in one click.</p></div></div>
+              <div class="flex gap-4 items-start"><span class="material-symbols-outlined text-sm mt-1" style="color:#dab9ff;">check_circle</span><div><p class="font-bold text-gray-100">12 Actionable Statuses</p><p class="text-sm text-gray-500">Each triggers automatic WhatsApp/SMS to the consumer.</p></div></div>
+              <div class="flex gap-4 items-start"><span class="material-symbols-outlined text-sm mt-1" style="color:#dab9ff;">check_circle</span><div><p class="font-bold text-gray-100">3-Tier Prioritisation</p><p class="text-sm text-gray-500">TAT-expiring → Premium (₹50k+) → Future. 3 failures auto-escalate.</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 03: The Routing Engine -->
+      <div class="snap-center flex-shrink-0" style="width:min(calc(100vw - 32px), 900px);">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-start lg:items-center p-6 lg:p-12 rounded-[28px] lg:rounded-[40px]" style="background:#0e0e1a;border:1px solid rgba(255,255,255,0.05);">
+
+          <!-- Carousel — desktop aspect (web dashboard screenshots) -->
+          <div class="carousel">
+            <div class="relative overflow-hidden rounded-2xl w-full" style="aspect-ratio:16/10;background:#131317;border:1px solid rgba(255,255,255,0.1);">
+              <div class="c-slide on" data-cap="Dynamic Routing — best technician in one click">
+                <img src="images/admin-autoroute.png" alt="Auto-route" class="w-full h-full object-contain object-center" onerror="this.style.display='none'">
+              </div>
+              <div class="c-slide" data-cap="Mileage Tracking — logged, manager-approved">
+                <img src="images/admin-mileage.png" alt="Mileage" class="w-full h-full object-contain object-center" onerror="this.style.display='none'">
+              </div>
+              <div class="absolute inset-0 pointer-events-none" style="z-index:5;background:linear-gradient(to bottom right,rgba(30,233,182,0.12) 0%,transparent 60%);"></div>
+            </div>
+            <div class="mt-4 rounded-xl p-3.5" style="background:rgba(10,10,14,0.88);border:1px solid rgba(255,255,255,0.07);">
+              <p class="text-[10px] uppercase font-bold mb-1" style="color:#1ee9b6;">Engineering Highlight</p>
+              <p class="text-xs text-gray-400 italic carousel-cap">Dynamic Routing — best technician in one click</p>
+              <div class="flex gap-1.5 mt-2 carousel-dots">
+                <button class="c-dot on" aria-label="Slide 1"></button>
+                <button class="c-dot" aria-label="Slide 2"></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Text -->
+          <div>
+            <span class="text-6xl mb-6 block" style="font-family:'Instrument Serif',serif;color:#1ee9b6;">03</span>
+            <h3 class="text-4xl font-bold mb-6 text-gray-100">The Routing Engine</h3>
+            <p class="text-sm text-gray-400 leading-relaxed mb-8">A→B distance caching, Haversine fallback, Ola Maps backup. Scales to 400 technicians inside Google's free tier — ₹2.5L/month to ₹0.</p>
+            <div class="space-y-4">
+              <div class="flex gap-4 items-start"><span class="material-symbols-outlined text-sm mt-1" style="color:#1ee9b6;">check_circle</span><div><p class="font-bold text-gray-100">Permanent Distance Cache</p><p class="text-sm text-gray-500">No A→B pair calculated twice — 80% fewer API calls.</p></div></div>
+              <div class="flex gap-4 items-start"><span class="material-symbols-outlined text-sm mt-1" style="color:#1ee9b6;">check_circle</span><div><p class="font-bold text-gray-100">Inventory-aware Blocking</p><p class="text-sm text-gray-500">No parts, no assignment — no wasted trips.</p></div></div>
+              <div class="flex gap-4 items-start"><span class="material-symbols-outlined text-sm mt-1" style="color:#1ee9b6;">check_circle</span><div><p class="font-bold text-gray-100">Mileage &amp; Fuel Tracking</p><p class="text-sm text-gray-500">Routes log timestamps and reimbursement automatically.</p></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     5. PM DECISION LOG — stitch stagger + horizontal scroll, 5 decisions
+═══════════════════════════════════════════ -->
+<section class="py-20 border-b border-white/[0.06]" style="background:#0a0a0e;" id="decisions">
+  <div class="max-w-7xl mx-auto">
+    <div class="px-6 mb-16 reveal text-center">
+      <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-gray-600 mb-4">PM Decision Log</p>
+      <h2 class="text-4xl md:text-5xl text-gray-100">Hard Decisions, Scalable Wins</h2>
+    </div>
+
+    <!-- Stagger track with horizontal scroll -->
+    <div class="relative" style="height:520px;overflow:hidden;">
+      <div class="absolute inset-0 overflow-x-auto no-scroll" style="overflow-y:hidden;">
+        <div class="flex gap-6 items-center px-6 h-full relative" style="min-width:max-content;padding-top:60px;padding-bottom:60px;">
+
+          <!-- Center line spanning full content -->
+          <div class="absolute left-0 right-0 h-px" style="top:50%;background:rgba(255,255,255,0.05);"></div>
+
+          <!-- D1: Build vs Buy — UP — teal -->
+          <div class="dec-card dec-up glass p-8 rounded-2xl relative flex-shrink-0" style="width:288px;border-bottom:3px solid rgba(30,233,182,0.7);">
+            <div class="absolute -top-3 left-6 px-3 py-1 text-[10px] font-bold uppercase rounded" style="background:#1ee9b6;color:#0a0a0e;">Strategic</div>
+            <h4 class="text-xl font-bold mt-2 mb-4 text-gray-100">Build vs Buy for Routing</h4>
+            <div class="h-px mb-4" style="background:rgba(30,233,182,0.1);"></div>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex gap-2"><span style="color:rgba(30,233,182,0.6);">▸</span>Market tools: ₹2–3L upfront + per-tech fees that explode at scale</li>
+              <li class="flex gap-2"><span style="color:rgba(30,233,182,0.6);">▸</span>No vendor could own our IoT-linked routing</li>
+            </ul>
+            <div class="mt-4 pt-3 text-xs font-semibold flex items-center gap-1" style="border-top:1px solid rgba(30,233,182,0.1);color:#1ee9b6;"><span class="material-symbols-outlined text-sm">settings_suggest</span>Built in-house in 8 weeks</div>
+          </div>
+
+          <!-- D2: ₹2.5L API Bill — DOWN — red -->
+          <div class="dec-card dec-dn glass p-8 rounded-2xl relative flex-shrink-0" style="width:288px;border-bottom:3px solid rgba(251,113,133,0.7);">
+            <div class="absolute -top-3 left-6 px-3 py-1 text-[10px] font-bold uppercase rounded" style="background:#fb7185;color:#0a0a0e;">Crisis</div>
+            <h4 class="text-xl font-bold mt-2 mb-4 text-gray-100">The ₹2.5L API Bill Anomaly</h4>
+            <div class="h-px mb-4" style="background:rgba(251,113,133,0.1);"></div>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex gap-2"><span style="color:rgba(251,113,133,0.6);">▸</span>25 techs → ₹2.5L Google Maps bill in one month</li>
+              <li class="flex gap-2"><span style="color:rgba(251,113,133,0.6);">▸</span>Cause: zero caching — same A→B recalculated every call</li>
+              <li class="flex gap-2"><span style="color:rgba(251,113,133,0.6);">▸</span>Fix: permanent cache + Haversine + Ola Maps backup</li>
+            </ul>
+            <div class="mt-4 pt-3 text-xs font-semibold flex items-center gap-1" style="border-top:1px solid rgba(251,113,133,0.1);color:#fb7185;"><span class="material-symbols-outlined text-sm">trending_down</span>80% reduction in API costs</div>
+          </div>
+
+          <!-- D3: Radical Transparency — UP — purple -->
+          <div class="dec-card dec-up glass p-8 rounded-2xl relative flex-shrink-0" style="width:288px;border-bottom:3px solid rgba(218,185,255,0.7);">
+            <div class="absolute -top-3 left-6 px-3 py-1 text-[10px] font-bold uppercase rounded" style="background:#dab9ff;color:#0a0a0e;">Process</div>
+            <h4 class="text-xl font-bold mt-2 mb-4 text-gray-100">Radical Transparency</h4>
+            <div class="h-px mb-4" style="background:rgba(218,185,255,0.1);"></div>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex gap-2"><span style="color:rgba(218,185,255,0.6);">▸</span>Ops wanted to hide failures — fewer updates, fewer escalations</li>
+              <li class="flex gap-2"><span style="color:rgba(218,185,255,0.6);">▸</span>Data showed the opposite: hiding failures drove repeat calls</li>
+            </ul>
+            <div class="mt-4 pt-3 text-xs font-semibold flex items-center gap-1" style="border-top:1px solid rgba(218,185,255,0.1);color:#dab9ff;"><span class="material-symbols-outlined text-sm">group</span>Real ETAs + real updates</div>
+          </div>
+
+          <!-- D4: 3-Tier Prioritisation — DOWN — blue -->
+          <div class="dec-card dec-dn glass p-8 rounded-2xl relative flex-shrink-0" style="width:288px;border-bottom:3px solid rgba(96,165,250,0.7);">
+            <div class="absolute -top-3 left-6 px-3 py-1 text-[10px] font-bold uppercase rounded" style="background:#60a5fa;color:#0a0a0e;">Prioritisation</div>
+            <h4 class="text-xl font-bold mt-2 mb-4 text-gray-100">3-Tier Job Ordering</h4>
+            <div class="h-px mb-4" style="background:rgba(96,165,250,0.1);"></div>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex gap-2"><span class="font-bold text-xs" style="color:rgba(96,165,250,0.6);">1</span>TAT-expiring — committed today, always first</li>
+              <li class="flex gap-2"><span class="font-bold text-xs" style="color:rgba(96,165,250,0.6);">2</span>Premium (₹50k+) — go second</li>
+              <li class="flex gap-2"><span class="font-bold text-xs" style="color:rgba(96,165,250,0.6);">3</span>Future/rescheduled — negotiable, go last</li>
+              <li class="flex gap-2"><span style="color:rgba(96,165,250,0.6);">▸</span>3 failures → Needs Intervention queue</li>
+            </ul>
+          </div>
+
+          <!-- D5: Saying No — UP — amber -->
+          <div class="dec-card dec-up glass p-8 rounded-2xl relative flex-shrink-0" style="width:288px;border-bottom:3px solid rgba(245,158,11,0.7);">
+            <div class="absolute -top-3 left-6 px-3 py-1 text-[10px] font-bold uppercase rounded" style="background:#f59e0b;color:#0a0a0e;">Scoping</div>
+            <h4 class="text-xl font-bold mt-2 mb-1 text-gray-100">Saying No to Everyone</h4>
+            <p class="text-[11px] text-gray-600 mb-4">Occurrence × Impact ÷ Build cost</p>
+            <div class="h-px mb-4" style="background:rgba(245,158,11,0.1);"></div>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex gap-2"><span style="color:rgba(245,158,11,0.6);">✕</span>Auto-replacement orders — deferred to Phase 2</li>
+              <li class="flex gap-2"><span style="color:rgba(245,158,11,0.6);">✕</span>Custom filter views — too complex for MVP</li>
+              <li class="flex gap-2"><span style="color:rgba(245,158,11,0.6);">✕</span>Consumer self-rescheduling — deferred entirely</li>
+              <li class="flex gap-2"><span style="color:rgba(245,158,11,0.6);">✕</span>Holiday calendar UI — Excel upload saved weeks</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     6. OWNING THE LAUNCH — stitch UI, original text
+═══════════════════════════════════════════ -->
+<section class="py-20 px-6 border-y border-white/[0.06]" style="background:#1b1b1f;">
+  <div class="max-w-4xl mx-auto text-center reveal">
+    <span class="material-symbols-outlined mb-6 block" style="font-size:48px;color:#1ee9b6;">stars</span>
+    <h2 class="text-4xl mb-8 text-gray-100">Owning the Launch</h2>
+    <p class="text-xl text-gray-300 leading-relaxed mb-10 max-w-2xl mx-auto">
+      I didn't just ship it — I owned the launch. A week on the floor post-go-live. A <strong class="text-gray-100">Product Support function built from zero</strong>. Training before every feature, an owner on every escalation.
+    </p>
+    <div class="inline-flex flex-wrap justify-center gap-8 px-10 py-5 rounded-full" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);">
+      <div class="text-left">
+        <p class="text-2xl font-black" style="color:#1ee9b6;">507</p>
+        <p class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Users supported</p>
+      </div>
+      <div class="w-px" style="background:rgba(255,255,255,0.08);"></div>
+      <div class="text-left">
+        <p class="text-2xl font-black" style="color:#1ee9b6;">5 roles</p>
+        <p class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Trained &amp; onboarded</p>
+      </div>
+      <div class="w-px" style="background:rgba(255,255,255,0.08);"></div>
+      <div class="text-left">
+        <p class="text-2xl font-black" style="color:#1ee9b6;">0</p>
+        <p class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Dropped threads</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     7. IMPACT
+═══════════════════════════════════════════ -->
+<section class="py-20 px-6 border-b border-white/[0.06]" style="background:#0c0c12;" id="impact">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="reveal mb-10">
+      <p class="text-[11px] font-bold tracking-widest uppercase mb-3 text-gray-600">The Impact</p>
+      <h2 class="text-4xl md:text-5xl text-gray-100">Numbers that moved the business.</h2>
+    </div>
+
+    <!-- Timeline (moved from product gallery) -->
+    <div class="reveal relative mb-14 overflow-x-auto pb-1 no-scroll">
+      <div class="absolute left-0 right-0 top-[6px] h-px" style="background:rgba(30,233,182,0.12);"></div>
+      <div class="flex gap-0 min-w-max">
+        <div class="flex flex-col items-start gap-2 pr-10"><div class="w-3 h-3 rounded-full border-2 flex-shrink-0" style="border-color:#1ee9b6;background:#0c0c12;"></div><p class="text-[11px] font-semibold" style="color:#1ee9b6;">Nov 2024</p><p class="text-[11px] text-gray-600">Conception &amp; build</p></div>
+        <div class="flex flex-col items-start gap-2 pr-10"><div class="w-3 h-3 rounded-full border-2 flex-shrink-0" style="border-color:#1ee9b6;background:#0c0c12;"></div><p class="text-[11px] font-semibold" style="color:#1ee9b6;">Dec 2024</p><p class="text-[11px] text-gray-600">MVP live — 15 technicians</p></div>
+        <div class="flex flex-col items-start gap-2 pr-10"><div class="w-3 h-3 rounded-full border-2 border-white/20 flex-shrink-0" style="background:#0c0c12;"></div><p class="text-[11px] font-semibold text-gray-400">May 2025</p><p class="text-[11px] text-gray-600">Phase 2 — routing v2, scale</p></div>
+        <div class="flex flex-col items-start gap-2 pr-10"><div class="w-3 h-3 rounded-full border-2 border-white/20 flex-shrink-0" style="background:#0c0c12;"></div><p class="text-[11px] font-semibold text-gray-400">Oct 2025</p><p class="text-[11px] text-gray-600">100 in-house technicians</p></div>
+        <div class="flex flex-col items-start gap-2"><div class="w-3 h-3 rounded-full flex-shrink-0" style="background:#1ee9b6;"></div><p class="text-[11px] font-semibold" style="color:#1ee9b6;">Now</p><p class="text-[11px] text-gray-600">17–18K jobs/month, ₹0</p></div>
+      </div>
+    </div>
+
+    <!-- Row 1: 3 hero numbers -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5 stagger">
+
+      <!-- 1,50,000+ jobs -->
+      <div class="glass glow-card p-7 rounded-2xl relative overflow-hidden hover:scale-[1.02] transition-transform cursor-default">
+        <div class="absolute -top-6 -right-6 w-28 h-28 rounded-full pointer-events-none" style="background:radial-gradient(circle,rgba(30,233,182,0.12) 0%,transparent 70%);"></div>
+        <span class="material-symbols-outlined mb-4 block" style="color:#1ee9b6;font-size:28px;">assignment_turned_in</span>
+        <div class="text-[52px] font-black leading-none mb-2 float-num count-el" data-val="150000" data-sfx="+" data-pfx="" style="color:#1ee9b6;">1,50,000+</div>
+        <div class="text-sm text-gray-400 mb-1">Total jobs processed</div>
+        <div class="text-xs text-gray-600">across the platform, end to end</div>
+        <div class="prog-bar"><div class="prog-fill" style="--p:88%;background:linear-gradient(90deg,#1ee9b6,#93ffd8);"></div></div>
+      </div>
+
+      <!-- 64% cost reduction -->
+      <div class="glass p-7 rounded-2xl relative overflow-hidden hover:scale-[1.02] transition-transform cursor-default">
+        <div class="absolute -top-6 -right-6 w-28 h-28 rounded-full pointer-events-none" style="background:radial-gradient(circle,rgba(251,113,133,0.10) 0%,transparent 70%);"></div>
+        <span class="material-symbols-outlined mb-4 block" style="color:#fb7185;font-size:28px;">trending_down</span>
+        <div class="text-[52px] font-black leading-none mb-2 float-num count-el" data-val="64" data-sfx="%" style="color:#fb7185;">64%</div>
+        <div class="text-sm text-gray-400 mb-1">Reduction in install cost</div>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-xs font-bold line-through text-gray-600">₹700</span>
+          <span class="material-symbols-outlined text-xs text-gray-600">arrow_forward</span>
+          <span class="text-xs font-bold" style="color:#1ee9b6;">₹250</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" style="--p:64%;background:linear-gradient(90deg,#fb7185,#f97316);"></div></div>
+      </div>
+
+      <!-- ₹0 platform cost -->
+      <div class="glass p-7 rounded-2xl relative overflow-hidden hover:scale-[1.02] transition-transform cursor-default">
+        <div class="absolute -top-6 -right-6 w-28 h-28 rounded-full pointer-events-none" style="background:radial-gradient(circle,rgba(218,185,255,0.10) 0%,transparent 70%);"></div>
+        <span class="material-symbols-outlined mb-4 block" style="color:#dab9ff;font-size:28px;">savings</span>
+        <div class="text-[52px] font-black leading-none mb-2 float-num" style="color:#dab9ff;">₹0</div>
+        <div class="text-sm text-gray-400 mb-1">Platform running cost</div>
+        <div class="text-xs text-gray-600">scales to 400 technicians, free tier</div>
+        <div class="prog-bar"><div class="prog-fill" style="--p:100%;background:linear-gradient(90deg,#dab9ff,#c084fc);"></div></div>
+      </div>
+
+    </div>
+
+    <!-- Row 2: completion rate + portfolio share (progress-bar focused) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5 stagger">
+
+      <!-- 96.4% completion -->
+      <div class="glass p-7 rounded-2xl hover:scale-[1.01] transition-transform cursor-default">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <span class="material-symbols-outlined mb-2 block" style="color:#1ee9b6;font-size:24px;">verified</span>
+            <div class="text-[42px] font-black leading-none count-el" data-val="96.4" data-sfx="%" style="color:#1ee9b6;">96.4%</div>
+            <div class="text-sm text-gray-400 mt-2">Job completion rate</div>
+          </div>
+          <!-- Mini ring chart visual -->
+          <div class="relative w-20 h-20 flex-shrink-0" style="margin-top:4px;">
+            <svg viewBox="0 0 36 36" class="w-20 h-20 -rotate-90">
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="3"/>
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1ee9b6" stroke-width="3"
+                stroke-dasharray="96.4 3.6" stroke-linecap="round" class="ring-fill" style="opacity:0;transition:opacity .5s ease .8s;"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center text-[10px] font-bold" style="color:#1ee9b6;">96.4%</div>
+          </div>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" style="--p:96.4%;background:linear-gradient(90deg,#1ee9b6,#93ffd8);"></div></div>
+      </div>
+
+      <!-- 20%→45% portfolio share -->
+      <div class="glass p-7 rounded-2xl hover:scale-[1.01] transition-transform cursor-default">
+        <span class="material-symbols-outlined mb-3 block" style="color:#f59e0b;font-size:24px;">bar_chart</span>
+        <div class="flex items-end gap-4 mb-4">
+          <div>
+            <div class="text-[42px] font-black leading-none" style="color:#6b7280;">20%</div>
+            <div class="text-[10px] uppercase tracking-widest text-gray-600 mt-1">Before</div>
+          </div>
+          <div class="text-2xl text-gray-600 mb-3">→</div>
+          <div>
+            <div class="text-[42px] font-black leading-none count-el" data-val="45" data-sfx="%" style="color:#f59e0b;">45%</div>
+            <div class="text-[10px] uppercase tracking-widest mt-1" style="color:#f59e0b;">After</div>
+          </div>
+        </div>
+        <div class="text-sm text-gray-400 mb-3">Installable portfolio share of revenue — single biggest growth driver</div>
+        <div class="flex gap-2 items-center">
+          <div class="h-2 rounded-full flex-shrink-0" style="width:20%;background:rgba(107,114,128,0.4);"></div>
+          <div class="h-2 rounded-full prog-fill flex-shrink-0" style="--p:45%;width:0;max-width:45%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:9999px;"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Row 3: growth & scale metrics 4-col -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 stagger">
+
+      <div class="glass p-5 rounded-2xl text-center hover:scale-[1.02] transition-transform cursor-default">
+        <span class="material-symbols-outlined mb-2 block mx-auto" style="color:#1ee9b6;font-size:20px;">trending_up</span>
+        <div class="text-[36px] font-black leading-none mb-1" style="color:#1ee9b6;">8–10×</div>
+        <div class="text-[10px] uppercase tracking-widest text-gray-600 font-bold">Volume Growth</div>
+        <div class="text-xs text-gray-600 mt-1">2K → 15–20K jobs/mo</div>
+      </div>
+
+      <div class="glass p-5 rounded-2xl text-center hover:scale-[1.02] transition-transform cursor-default">
+        <span class="material-symbols-outlined mb-2 block mx-auto" style="color:#1ee9b6;font-size:20px;">engineering</span>
+        <div class="text-[36px] font-black leading-none mb-1 count-el" data-val="10" data-sfx="×" style="color:#1ee9b6;">10×</div>
+        <div class="text-[10px] uppercase tracking-widest text-gray-600 font-bold">Technician Scale</div>
+        <div class="text-xs text-gray-600 mt-1">10 → 100 in-house</div>
+      </div>
+
+      <div class="glass p-5 rounded-2xl text-center hover:scale-[1.02] transition-transform cursor-default">
+        <span class="material-symbols-outlined mb-2 block mx-auto" style="color:#dab9ff;font-size:20px;">group</span>
+        <div class="text-[36px] font-black leading-none mb-1 count-el" data-val="507" data-sfx="" style="color:#dab9ff;">507</div>
+        <div class="text-[10px] uppercase tracking-widest text-gray-600 font-bold">Active Users</div>
+        <div class="text-xs text-gray-600 mt-1">across 5 roles</div>
+      </div>
+
+      <div class="glass p-5 rounded-2xl text-center hover:scale-[1.02] transition-transform cursor-default">
+        <span class="material-symbols-outlined mb-2 block mx-auto" style="color:#60a5fa;font-size:20px;">speed</span>
+        <div class="text-[36px] font-black leading-none mb-1" style="color:#60a5fa;">17–18K</div>
+        <div class="text-[10px] uppercase tracking-widest text-gray-600 font-bold">Jobs / Month</div>
+        <div class="text-xs text-gray-600 mt-1">at ₹0 platform cost</div>
+      </div>
+
+    </div>
+
+    <!-- Row 4: meta stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 stagger">
+
+      <div class="glass p-5 rounded-2xl flex items-center gap-5 hover:scale-[1.01] transition-transform cursor-default">
+        <span class="material-symbols-outlined flex-shrink-0" style="color:#f59e0b;font-size:32px;">confirmation_number</span>
+        <div>
+          <div class="text-[36px] font-black leading-none count-el" data-val="83" data-sfx="" style="color:#f59e0b;">83</div>
+          <div class="text-xs text-gray-400 mt-1">Jira tickets shipped<br><span class="text-gray-600">across 2 phases</span></div>
+        </div>
+      </div>
+
+      <div class="glass p-5 rounded-2xl flex items-center gap-5 hover:scale-[1.01] transition-transform cursor-default">
+        <span class="material-symbols-outlined flex-shrink-0" style="color:#1ee9b6;font-size:32px;">swap_vert</span>
+        <div>
+          <div class="text-sm font-black leading-none mb-1" style="color:#6b7280;">5 people · 10 techs</div>
+          <div class="text-[10px] uppercase tracking-widest text-gray-600 mb-2">Before</div>
+          <div class="text-sm font-black leading-none mb-1 count-el" data-val="100" data-sfx=" techs" data-pfx="10 people · " style="color:#1ee9b6;">10 people · 100 techs</div>
+          <div class="text-[10px] uppercase tracking-widest" style="color:#1ee9b6;">After — 10× scale, 2× headcount</div>
+        </div>
+      </div>
+
+      <div class="glass p-5 rounded-2xl flex items-center gap-5 hover:scale-[1.01] transition-transform cursor-default">
+        <span class="material-symbols-outlined flex-shrink-0" style="color:#1ee9b6;font-size:32px;">currency_rupee</span>
+        <div>
+          <div class="text-[36px] font-black leading-none" style="color:#1ee9b6;">₹0</div>
+          <div class="text-xs text-gray-400 mt-1">Platform running cost<br><span class="text-gray-600">until 400 technicians</span></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     9. NEXT CASE STUDY
+═══════════════════════════════════════════ -->
+<section class="py-12 px-6 border-b border-white/[0.06]" style="background:#0c0c12;">
+  <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+    <div>
+      <p class="text-xs text-gray-600 uppercase tracking-widest font-bold mb-1">Next Case Study</p>
+      <h3 class="text-2xl text-gray-100" style="font-family:'Instrument Serif',serif;">MedikaCloud</h3>
+      <p class="text-sm text-gray-400 mt-1">100 hospital interviews → an AI that finds ₹2.1Cr in savings</p>
+    </div>
+    <a href="/medikacloud/" class="flex-shrink-0 font-bold px-6 py-3 rounded-xl text-sm transition-colors" style="background:#fff;color:#000;">Read next →</a>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     10. FOOTER — stitch style
+═══════════════════════════════════════════ -->
+<footer class="py-20 px-6 text-center border-t border-white/[0.06]" style="background:#0e0e12;">
+  <div class="max-w-7xl mx-auto">
+    <h2 class="text-4xl md:text-5xl mb-10 text-gray-100">Building for the messy real world.</h2>
+    <div class="flex flex-wrap justify-center items-center gap-6 text-xs text-gray-600 mb-4">
+      <a href="mailto:chaturvedisharanya@gmail.com" class="hover:text-gray-300 transition-colors">Email</a>
+      <a href="https://linkedin.com/in/chaturvedisharanya" target="_blank" rel="noopener noreferrer" class="hover:text-gray-300 transition-colors">LinkedIn</a>
+      <a href="#" class="hover:text-gray-300 transition-colors">Resume (PDF)</a>
+    </div>
+    <p class="text-[10px] uppercase tracking-[0.4em] font-bold text-gray-700">© 2025 Sharanya Chaturvedi · High Integrity Design</p>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════ -->
+<script>
+// ── Scroll Reveal ──────────────────────────────────────────
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .stagger').forEach(el => io.observe(el));
+
+// ── Counter Animation ──────────────────────────────────────
+function animateCount(el) {
+  const val   = parseFloat(el.dataset.val);
+  const sfx   = el.dataset.sfx  || '';
+  const pfx   = el.dataset.pfx  || '';
+  const dur   = 1400, fps = 60;
+  const step  = val / (dur / (1000 / fps));
+  let cur = 0;
+  el.classList.add('num-appear');
+  const t = setInterval(() => {
+    cur = Math.min(cur + step, val);
+    const display = Number.isInteger(val) ? Math.round(cur).toLocaleString('en-IN') : cur.toFixed(1);
+    el.textContent = pfx + display + sfx;
+    if (cur >= val) clearInterval(t);
+  }, 1000 / fps);
+}
+
+const cio = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting && !e.target.dataset.done) {
+      e.target.dataset.done = '1';
+      animateCount(e.target);
+    }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.count-el').forEach(el => cio.observe(el));
+
+// ── Progress Bars ──────────────────────────────────────────
+const pio = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting && !e.target.dataset.done) {
+      e.target.dataset.done = '1';
+      // Slight delay so the card reveal finishes first
+      setTimeout(() => e.target.querySelectorAll('.prog-fill').forEach(b => b.classList.add('go')), 300);
+      // Also reveal the SVG ring if present
+      const ring = e.target.querySelector('.ring-fill');
+      if (ring) setTimeout(() => ring.style.opacity = '1', 400);
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.glass').forEach(el => pio.observe(el));
+
+// ── Carousel ───────────────────────────────────────────────
+function initCarousels() {
+  document.querySelectorAll('.carousel').forEach(card => {
+    const slides = card.querySelectorAll('.c-slide');
+    const capEl  = card.querySelector('.carousel-cap');
+    const dots   = card.querySelectorAll('.c-dot');
+    if (!slides.length) return;
+    let cur = 0, timer;
+
+    function goTo(idx) {
+      slides[cur].classList.remove('on');
+      dots[cur]?.classList.remove('on');
+      cur = (idx + slides.length) % slides.length;
+      slides[cur].classList.add('on');
+      dots[cur]?.classList.add('on');
+      if (capEl) capEl.textContent = slides[cur].dataset.cap || '';
+    }
+
+    function resetTimer() {
+      clearInterval(timer);
+      timer = setInterval(() => goTo(cur + 1), 6000);
+    }
+
+    dots.forEach((d, i) => d.addEventListener('click', () => { goTo(i); resetTimer(); }));
+    resetTimer();
+  });
+}
+window.addEventListener('DOMContentLoaded', initCarousels);
+
+// ── Scroll Progress ────────────────────────────────────────
+const pb = document.getElementById('scroll-progress');
+window.addEventListener('scroll', () => {
+  const s = document.documentElement.scrollTop || document.body.scrollTop;
+  const h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  pb.style.transform = `scaleX(${h ? s / h : 0})`;
+}, { passive: true });
+
+// ── Scrollspy — highlight current section in nav ───────────
+const spyLinks = [...document.querySelectorAll('.nav-link')];
+const spyObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    spyLinks.forEach(l => l.classList.toggle('active', l.dataset.spy === e.target.id));
+  });
+}, { rootMargin: '-40% 0px -55% 0px' });
+['story', 'gallery', 'decisions', 'impact'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) spyObs.observe(el);
+});
+
+// ── Mobile Menu ────────────────────────────────────────────
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobile-menu');
+function openMobileMenu()  { hamburger.classList.add('open'); mobileMenu.classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeMobileMenu() { hamburger.classList.remove('open'); mobileMenu.classList.remove('open'); document.body.style.overflow = ''; }
+hamburger.addEventListener('click', openMobileMenu);
+document.getElementById('mobile-close').addEventListener('click', closeMobileMenu);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileMenu(); });
+</script>
+</body>
+</html>

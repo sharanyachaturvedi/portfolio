@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedikaCloud — Sharanya Chaturvedi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { brand: '#1EE9B6', purple: '#962EFF', amber: '#F9A825' },
+          fontFamily: {
+            sans: ['Inter', 'Arial', 'sans-serif'],
+            serif: ['Instrument Serif', 'Georgia', 'serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- reveal animations only hide content when JS is running; without JS everything stays visible -->
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    body { background-color: #0a0a0e; -webkit-font-smoothing: antialiased; font-family: 'Inter', Arial, sans-serif; }
+    h1,h2,h3,h4 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; }
+    ::selection { background: #962EFF; color: #fff; }
+
+    /* ── SCROLL ANIMATIONS (hidden state scoped to .js) ── */
+    .js [data-anim] { opacity: 0; transform: translateY(20px); }
+    [data-anim].in { opacity: 1; transform: translateY(0); transition: opacity 0.65s ease, transform 0.65s ease; }
+    [data-d="1"].in { transition-delay: 0.08s; }
+    [data-d="2"].in { transition-delay: 0.16s; }
+    [data-d="3"].in { transition-delay: 0.24s; }
+    [data-d="4"].in { transition-delay: 0.32s; }
+
+    /* ── NAV / PROGRESS / MOBILE MENU ── */
+    section[id] { scroll-margin-top: 70px; }
+    #scroll-progress { transform-origin: left; transform: scaleX(0); }
+    .nav-link.active { color: #c8b4ff !important; }
+    #mobile-menu { display: none; }
+    #mobile-menu.open { display: flex; }
+    #hamburger .hline { display:block; width:20px; height:2px; background:#fff; border-radius:2px; transition:all .25s ease; }
+    #hamburger.open .hline:nth-child(1){ transform:translateY(7px) rotate(45deg); }
+    #hamburger.open .hline:nth-child(2){ opacity:0; transform:scaleX(0); }
+    #hamburger.open .hline:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
+
+    /* ── GLOWS ── */
+    .glow-p { text-shadow: 0 0 28px rgba(150,46,255,0.5); }
+    .glow-t { text-shadow: 0 0 28px rgba(30,233,182,0.5); }
+    .glow-a { text-shadow: 0 0 28px rgba(249,168,37,0.5); }
+
+    /* ── PRODUCT SLIDER ── */
+    .pe-scroll { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:20px; padding-bottom:20px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+    .pe-scroll::-webkit-scrollbar { display:none; }
+    .pe-item { flex:0 0 300px; scroll-snap-align:start; }
+    .tab-btn { transition: all .25s ease; }
+    .tab-btn.on { background:rgba(150,46,255,0.12); border-color:rgba(150,46,255,0.4) !important; color:#c8b4ff; }
+
+    /* ── HOVER INSIGHT CARDS ── */
+    .wire-card { position:relative; overflow:hidden; transition:transform 0.3s ease; cursor:pointer; }
+    .wire-card:hover { transform:translateY(-3px); }
+    .wire-commentary { position:absolute; inset:0; background:rgba(10,10,14,0.95); padding:1.4rem; display:flex; flex-direction:column; justify-content:center; gap:10px; opacity:0; transition:opacity 0.3s ease; border-radius:inherit; border:1px solid rgba(30,233,182,0.3); z-index:10; }
+    .wire-card:hover .wire-commentary { opacity:1; }
+
+    /* ── IMAGE PLACEHOLDERS ── */
+    .ph { position:relative; overflow:hidden; background:#0e0e1a; border:1px solid rgba(150,46,255,0.15); border-radius:12px; }
+    .ph img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:#0e0e1a; z-index:2; }
+    .ph-label { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:rgba(150,46,255,0.38); font-size:11px; font-weight:600; letter-spacing:0.05em; padding:14px; text-align:center; z-index:1; line-height:1.5; }
+
+    /* ── HERO ── */
+    .hero-section { position:relative; overflow:hidden; border-bottom:1px solid rgba(255,255,255,0.06); min-height:540px; display:flex; align-items:center; }
+    .hero-bg { position:absolute; inset:0; background-image:url('assets/screen-dashboard.png'); background-size:cover; background-position:center top; opacity:0.14; filter:saturate(0.85); }
+    .hero-overlay { position:absolute; inset:0; background: linear-gradient(to bottom, rgba(10,10,14,0.75) 0%, rgba(10,10,14,0.45) 45%, rgba(10,10,14,0.85) 100%), radial-gradient(ellipse 90% 65% at 50% 0%, rgba(150,46,255,0.3) 0%, transparent 55%); }
+    .hero-content { position:relative; z-index:10; width:100%; }
+
+    /* ── CITY CHIPS ── */
+    .city { display:inline-block; padding:3px 11px; border-radius:999px; background:rgba(150,46,255,0.07); border:1px solid rgba(150,46,255,0.2); color:rgba(200,170,255,0.85); font-size:11px; font-weight:600; }
+
+    /* ── BADGES ── */
+    .badge-p { background:rgba(150,46,255,0.12); border:1px solid rgba(150,46,255,0.25); color:#c8b4ff; }
+    .badge-t { background:rgba(30,233,182,0.1);  border:1px solid rgba(30,233,182,0.22);  color:#1EE9B6; }
+    .badge-a { background:rgba(249,168,37,0.1);  border:1px solid rgba(249,168,37,0.22);  color:#F9A825; }
+
+    /* ── MODEL STEPPER ── */
+    .step-node { position:relative; }
+    .step-node::before { content:''; position:absolute; top:19px; left:50%; right:-50%; height:2px; background:rgba(255,255,255,0.07); z-index:0; }
+    .step-node:last-child::before { display:none; }
+
+    /* ── FLOW DIAGRAM CHIPS ── */
+    .flow-chip { border:1px solid rgba(255,255,255,0.09); background:#0e0e1a; border-radius:14px; padding:12px 16px; }
+
+    /* ── ACCORDION ── */
+    .acc-body { max-height:0; overflow:hidden; transition:max-height 0.38s cubic-bezier(0.4,0,0.2,1); }
+    .acc-item[data-open] .acc-body { max-height:320px; }
+    .acc-chevron { transition:transform 0.3s ease; flex-shrink:0; }
+    .acc-item[data-open] .acc-chevron { transform:rotate(180deg); }
+    .acc-trigger { width:100%; display:flex; align-items:center; gap:14px; text-align:left; cursor:pointer; background:none; border:none; padding:18px 22px; color:inherit; }
+    .acc-trigger:hover .acc-title { color:#fff; }
+    .acc-item { border-radius:16px; overflow:hidden; transition:border-color 0.2s; }
+    .acc-item[data-open] { border-color:rgba(150,46,255,0.25) !important; }
+
+    /* ── IMPACT PROGRESS BARS ── */
+    .prog-bar { height:3px; border-radius:9999px; background:rgba(255,255,255,0.07); overflow:hidden; margin-top:14px; }
+    .prog-fill { height:100%; width:0; border-radius:9999px; transition:width 1.5s cubic-bezier(0.25,1,0.5,1); }
+    .prog-fill.go { width:var(--p); }
+  </style>
+</head>
+<body class="text-white font-sans">
+
+<!-- SCROLL PROGRESS -->
+<div class="fixed top-0 left-0 w-full h-0.5 z-[60]">
+  <div class="h-full" id="scroll-progress" style="background:#962EFF;"></div>
+</div>
+
+<!-- ── NAV ── -->
+<nav class="sticky top-0 z-40 border-b border-white/[0.07] bg-[#0a0a0e]/92 backdrop-blur-xl">
+  <div class="max-w-7xl mx-auto px-6 h-[62px] flex items-center justify-between gap-4">
+    <a href="/" class="flex-shrink-0">
+      <div style="font-family:'Peace Sans',sans-serif;line-height:0.92;color:#f3f4f6;font-size:17px;font-weight:400;letter-spacing:0.01em">
+        <span style="display:block">Sharanya</span><span style="display:block">Chaturvedi</span>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-7">
+      <a href="/#work" class="text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">← All Work</a>
+      <span class="text-[13px] font-semibold" style="color:#962EFF;">MedikaCloud</span>
+      <a href="#story"    data-spy="story"    class="nav-link text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">The Story</a>
+      <a href="#product"  data-spy="product"  class="nav-link text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">The Product</a>
+      <a href="#ai"       data-spy="ai"       class="nav-link text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">The AI</a>
+      <a href="#business" data-spy="business" class="nav-link text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">The Business</a>
+      <a href="#impact"   data-spy="impact"   class="nav-link text-[13px] text-gray-400 hover:text-gray-100 font-medium transition-colors">Impact</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="mailto:chaturvedisharanya@gmail.com" class="flex-shrink-0 bg-white text-black text-[13px] font-bold px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">Let's talk →</a>
+      <button id="hamburger" class="md:hidden flex flex-col justify-center items-center gap-[5px] w-9 h-9 rounded-lg hover:bg-white/5 transition-colors" aria-label="Open menu">
+        <span class="hline"></span><span class="hline"></span><span class="hline"></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div id="mobile-menu" class="fixed inset-0 z-50 bg-[#0a0a0e] flex-col items-center justify-center gap-7">
+  <button id="mobile-close" class="absolute top-5 right-6 text-gray-400 hover:text-white text-xl transition-colors" aria-label="Close">✕</button>
+  <a href="/#work"    onclick="closeMobileMenu()" class="text-[40px] text-gray-100 hover:text-[#c8b4ff] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">← All Work</a>
+  <a href="#story"    onclick="closeMobileMenu()" class="text-[40px] text-gray-100 hover:text-[#c8b4ff] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">The Story</a>
+  <a href="#product"  onclick="closeMobileMenu()" class="text-[40px] text-gray-100 hover:text-[#c8b4ff] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">The Product</a>
+  <a href="#ai"       onclick="closeMobileMenu()" class="text-[40px] text-gray-100 hover:text-[#c8b4ff] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">The AI</a>
+  <a href="#business" onclick="closeMobileMenu()" class="text-[40px] text-gray-100 hover:text-[#c8b4ff] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">The Business</a>
+  <a href="#impact"   onclick="closeMobileMenu()" class="text-[40px] text-gray-100 hover:text-[#c8b4ff] transition-colors" style="font-family:'Instrument Serif',Georgia,serif">Impact</a>
+  <a href="mailto:chaturvedisharanya@gmail.com" class="mt-5 bg-white text-black text-[14px] font-bold px-7 py-3.5 rounded-xl hover:bg-gray-100 transition-colors">Let's talk →</a>
+</div>
+
+<!-- ── HERO ── -->
+<section class="hero-section">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content">
+    <div class="max-w-5xl mx-auto px-6 py-16 text-center">
+
+      <!-- Tags -->
+      <div class="flex flex-wrap justify-center gap-2 mb-7" data-anim data-d="1">
+        <span class="px-3 py-1.5 rounded-full border border-[#962EFF]/30 bg-[#962EFF]/5 text-[10px] font-bold text-[#c8b4ff] tracking-widest uppercase">0→1 Build</span>
+        <span class="px-3 py-1.5 rounded-full border border-[#962EFF]/30 bg-[#962EFF]/5 text-[10px] font-bold text-[#c8b4ff] tracking-widest uppercase">Predictive AI</span>
+        <span class="px-3 py-1.5 rounded-full border border-[#962EFF]/30 bg-[#962EFF]/5 text-[10px] font-bold text-[#c8b4ff] tracking-widest uppercase">B2B HealthTech</span>
+        <span class="px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.04] text-[10px] font-bold text-gray-400 tracking-widest uppercase">Medikabazaar</span>
+        <span class="px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.04] text-[10px] font-bold text-gray-500 tracking-widest uppercase">2022 – 2024</span>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="text-4xl md:text-5xl lg:text-[54px] leading-[1.07] tracking-[-1px] mb-5 text-gray-100 max-w-3xl mx-auto" style="text-shadow:0 2px 28px rgba(0,0,0,0.55);" data-anim data-d="2">
+        How I turned 100 hospital interviews into a predictive AI —
+        <em style="font-style:italic; color:#c8b4ff">deployed across India and UAE</em>
+      </h1>
+
+      <p class="text-base md:text-lg text-gray-300 mb-8 max-w-xl mx-auto leading-relaxed" data-anim data-d="3">
+        Pen-and-paper wireframes to a live AI forecasting platform — built end-to-end as the only PM.
+      </p>
+
+      <!-- Identity strip (impact numbers live in Impact) -->
+      <div class="inline-flex flex-wrap justify-center items-center gap-x-6 gap-y-2 px-8 py-4 rounded-full mb-8" style="background:rgba(0,0,0,0.4);border:1px solid rgba(150,46,255,0.25);backdrop-filter:blur(6px);" data-anim data-d="4">
+        <span class="text-sm font-bold" style="color:#c8b4ff">Sole PM</span>
+        <span class="w-px h-4 bg-white/10 hidden sm:block"></span>
+        <span class="text-sm font-bold text-gray-200">0→1 in 8 months</span>
+        <span class="w-px h-4 bg-white/10 hidden sm:block"></span>
+        <span class="text-sm font-bold text-gray-200">India + UAE</span>
+      </div>
+
+      <div class="flex items-center justify-center gap-5" data-anim data-d="4">
+        <a href="#story" class="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] hover:underline" style="color:#c8b4ff;">Read the story ↓</a>
+        <div class="h-px w-8 bg-white/10"></div>
+        <span class="text-[10px] uppercase tracking-widest text-gray-600 font-bold">≈4 min read</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── THE STORY : PROBLEM + RESEARCH ── -->
+<section class="py-20 px-6 bg-[#0c0c12] border-b border-white/[0.06]" id="story">
+  <div class="max-w-4xl mx-auto">
+
+    <p class="text-[11px] font-bold tracking-widest uppercase text-[#962EFF]/60 mb-4" data-anim>The Problem</p>
+    <h2 class="text-3xl md:text-[42px] leading-[1.1] tracking-[-0.5px] mb-8 text-gray-100 max-w-2xl" data-anim>Indian hospitals run inventory on gut feel.</h2>
+
+    <!-- Three leaks — typographic list -->
+    <div class="space-y-4 mb-10 max-w-2xl" data-anim>
+      <div class="flex items-center gap-4">
+        <div class="w-9 h-9 rounded-xl badge-p flex items-center justify-center flex-shrink-0">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M9 5v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="9" cy="13" r="0.7" fill="currentColor"/></svg>
+        </div>
+        <p class="text-sm text-gray-400"><strong class="text-gray-100 font-semibold">Expired inventory</strong> — capital written off, compliance risk created.</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="w-9 h-9 rounded-xl badge-t flex items-center justify-center flex-shrink-0">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="2" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="10" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="10" y="10" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.4"/></svg>
+        </div>
+        <p class="text-sm text-gray-400"><strong class="text-gray-100 font-semibold">Dead &amp; non-moving stock</strong> — capital locked with zero visibility.</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="w-9 h-9 rounded-xl badge-a flex items-center justify-center flex-shrink-0">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M2 14L9 4l7 10H2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 8v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="9" cy="12.5" r="0.6" fill="currentColor"/></svg>
+        </div>
+        <p class="text-sm text-gray-400"><strong class="text-gray-100 font-semibold">Gut-feel procurement</strong> — expensive last-minute sourcing, no intelligence.</p>
+      </div>
+    </div>
+
+    <div class="border-l-2 border-[#962EFF]/35 pl-6 mb-16" data-anim>
+      <h3 class="text-2xl md:text-[30px] text-white leading-snug tracking-[-0.3px]" style="font-family:'Instrument Serif',Georgia,serif;">MedikaCloud was built to be the intelligence layer none of them had — real time, SKU by SKU.</h3>
+    </div>
+
+    <!-- Research -->
+    <p class="text-[11px] font-bold tracking-widest uppercase text-[#962EFF]/60 mb-4" data-anim>The Research</p>
+    <h2 class="text-2xl md:text-[32px] leading-[1.15] tracking-[-0.5px] mb-8 text-gray-100 max-w-2xl" data-anim>Before a single line of code, I met <em style="color:#c8b4ff">100 hospital owners</em> across India.</h2>
+
+    <!-- Research at a glance -->
+    <div class="grid grid-cols-3 gap-4 mb-6" data-anim>
+      <div class="bg-[#0e0e1a] border border-[#962EFF]/20 rounded-2xl p-5 text-center">
+        <div class="text-3xl md:text-4xl font-black leading-none mb-1" style="color:#c8b4ff"><span class="counter" data-target="100">0</span>+</div>
+        <div class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Hospital owners</div>
+      </div>
+      <div class="bg-[#0e0e1a] border border-[#1EE9B6]/20 rounded-2xl p-5 text-center">
+        <div class="text-3xl md:text-4xl font-black leading-none mb-1" style="color:#1EE9B6"><span class="counter" data-target="10">0</span></div>
+        <div class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Cities</div>
+      </div>
+      <div class="bg-[#0e0e1a] border border-[#F9A825]/20 rounded-2xl p-5 text-center">
+        <div class="text-3xl md:text-4xl font-black leading-none mb-1" style="color:#F9A825"><span class="counter" data-target="2">0</span></div>
+        <div class="text-[10px] uppercase tracking-widest font-bold text-gray-600">Users to design for</div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2 mb-10" data-anim>
+      <span class="city">Delhi</span><span class="city">Noida</span><span class="city">Rewari</span><span class="city">Mumbai</span><span class="city">Pune</span><span class="city">Kolkata</span><span class="city">Varanasi</span><span class="city">Raipur</span><span class="city">Bangalore</span><span class="city">Hyderabad</span>
+    </div>
+
+    <!-- The one insight that mattered -->
+    <div class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl overflow-hidden" data-anim>
+      <div class="px-6 pt-5 pb-4 border-b border-white/[0.05]">
+        <p class="text-[9px] font-bold tracking-widest uppercase" style="color:rgba(30,233,182,0.7)">The insight that shaped everything · The Buyer ≠ The User</p>
+      </div>
+      <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.05]">
+        <div class="p-6">
+          <p class="text-[10px] font-bold tracking-widest uppercase text-gray-600 mb-2">The CXO buys</p>
+          <p class="text-sm text-gray-300 leading-relaxed">Driven by <strong class="text-white font-semibold">ROI &amp; savings</strong> — wants the ₹ leakage view, never a spreadsheet.</p>
+        </div>
+        <div class="p-6">
+          <p class="text-[10px] font-bold tracking-widest uppercase text-gray-600 mb-2">The procurement manager uses</p>
+          <p class="text-sm text-gray-300 leading-relaxed">Driven by <strong class="text-white font-semibold">daily operations</strong> — indenting, vendor follow-ups, GRN.</p>
+        </div>
+      </div>
+      <div class="px-6 py-5 bg-black/20">
+        <p class="text-sm leading-relaxed" style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;color:#c8b4ff">"One product, two entry points — the ROI-seeker and the daily operator. Designing for this duality became the winning strategy."</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── THE PRODUCT : PAPER → LIVE ── -->
+<section class="py-20 px-6 bg-[#0a0a0e] border-b border-white/[0.06]" id="product">
+  <div class="max-w-7xl mx-auto">
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6">
+      <div data-anim>
+        <p class="text-[11px] font-bold tracking-widest uppercase text-[#962EFF]/60 mb-3">The Product</p>
+        <h2 class="text-3xl md:text-[42px] leading-[1.1] tracking-[-0.5px] mb-3 text-gray-100">Paper sketches → live command center</h2>
+        <p class="text-sm text-gray-500">Hover any screen for the call behind it.</p>
+      </div>
+      <div class="flex gap-2" data-anim>
+        <button id="live-prev-btn" class="w-10 h-10 rounded-full border border-white/[0.1] bg-white/[0.03] flex items-center justify-center text-gray-400 hover:border-[#962EFF]/40 hover:text-white transition-all" aria-label="Previous">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button id="live-next-btn" class="w-10 h-10 rounded-full border border-white/[0.1] bg-white/[0.03] flex items-center justify-center text-gray-400 hover:border-[#962EFF]/40 hover:text-white transition-all" aria-label="Next">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-2 mb-8" data-anim>
+      <button class="tab-btn on px-4 py-2 rounded-full border border-white/[0.1] text-[11px] font-bold uppercase tracking-widest text-gray-400" data-tab="wire">Day 1 · Paper sketches</button>
+      <button class="tab-btn px-4 py-2 rounded-full border border-white/[0.1] text-[11px] font-bold uppercase tracking-widest text-gray-400" data-tab="live">Month 8 · Live product</button>
+    </div>
+
+    <!-- WIREFRAMES PANEL -->
+    <div class="pe-scroll" id="wire-panel" data-anim>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(255,255,255,0.07);border-radius:10px;">
+            <img src="assets/wireframe-home.png" alt="Home Dashboard" onerror="this.style.display='none'">
+            <div class="ph-label"><span>wireframe-home.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"Lead with savings — it turns the app from an expense into a revenue-protecting tool."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">Home Dashboard <span class="text-gray-600 font-normal">· the CXO's view</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(255,255,255,0.07);border-radius:10px;">
+            <img src="assets/wireframe-forecast.png" alt="AI Forecast View" onerror="this.style.display='none'">
+            <div class="ph-label"><span>wireframe-forecast.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"Not abstract graphs — a list of what to buy TODAY."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">AI Forecast <span class="text-gray-600 font-normal">· prediction → action</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(255,255,255,0.07);border-radius:10px;">
+            <img src="assets/wireframe-inventory.png" alt="Current Inventory" onerror="this.style.display='none'">
+            <div class="ph-label"><span>wireframe-inventory.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"Procurement managers act without switching systems — every SKU, every day."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">Current Inventory <span class="text-gray-600 font-normal">· the daily view</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(255,255,255,0.07);border-radius:10px;">
+            <img src="assets/wireframe-expired.png" alt="Expired & Near-to-Expiry" onerror="this.style.display='none'">
+            <div class="ph-label"><span>wireframe-expired.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"Batch-level drill-down with cost attached — the problem hospitals never saw until too late."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">Expired &amp; Near-Expiry <span class="text-gray-600 font-normal">· invisible cost, visible</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(255,255,255,0.07);border-radius:10px;">
+            <img src="assets/wireframe-create-po.png" alt="Create PO" onerror="this.style.display='none'">
+            <div class="ph-label"><span>wireframe-create-po.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#F9A825;">User pull</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"UAE hospitals had zero legacy systems — we pivoted from 'only forecast' to 'full procurement' because users asked."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">Create PO <span class="text-gray-600 font-normal">· user pull, not roadmap</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(255,255,255,0.07);border-radius:10px;">
+            <img src="assets/wireframe-data-upload.png" alt="Data Upload" onerror="this.style.display='none'">
+            <div class="ph-label"><span>wireframe-data-upload.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"File-upload onboarding + GRN tracking — the operational backbone."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">Data Upload &amp; GRN <span class="text-gray-600 font-normal">· onboarding backbone</span></h4>
+      </div>
+
+    </div>
+
+    <!-- LIVE PANEL -->
+    <div class="pe-scroll hidden" id="live-panel">
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(30,233,182,0.12);border-radius:10px;">
+            <img src="assets/screen-dashboard.png" alt="Smart Projection" onerror="this.style.display='none'">
+            <div class="ph-label" style="color:rgba(30,233,182,0.4);"><span>screen-dashboard.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"₹3.65Cr of live inventory on one graph — visibility is step one of optimization."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">Smart Projection <span class="text-gray-600 font-normal">· the CXO's morning check</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(30,233,182,0.12);border-radius:10px;">
+            <img src="assets/screen-savings.png" alt="Potential Savings" onerror="this.style.display='none'">
+            <div class="ph-label" style="color:rgba(30,233,182,0.4);"><span>screen-savings.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"1,163 SKUs with exact leakage points and cost-reduction potential."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">Potential Savings <span class="text-gray-600 font-normal">· the number they came back for</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(30,233,182,0.12);border-radius:10px;">
+            <img src="assets/screen-ai-forecast.png" alt="AI Forecast" onerror="this.style.display='none'">
+            <div class="ph-label" style="color:rgba(30,233,182,0.4);"><span>screen-ai-forecast.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"2,382 order-today · 1,807 out-of-stock · 574 critical — per-SKU, with a Finishes-In countdown."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">AI Forecast <span class="text-gray-600 font-normal">· the intelligence core</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(30,233,182,0.12);border-radius:10px;">
+            <img src="assets/screen-inventory.png" alt="Inventory Status" onerror="this.style.display='none'">
+            <div class="ph-label" style="color:rgba(30,233,182,0.4);"><span>screen-inventory.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"1,502 SKUs tracked live — where procurement managers lived."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">SKU-Level Inventory <span class="text-gray-600 font-normal">· the daily workspace</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(249,168,37,0.12);border-radius:10px;">
+            <img src="assets/screen-create-po.png" alt="Create PO" onerror="this.style.display='none'">
+            <div class="ph-label" style="color:rgba(249,168,37,0.4);"><span>screen-create-po.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#F9A825;">User pull</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"One click from forecast to raised PO — HSN, UOM, GST auto-populated."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">Create PO <span class="text-gray-600 font-normal">· forecast → order, one click</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(249,168,37,0.12);border-radius:10px;">
+            <img src="assets/screen-order-tracking.png" alt="Order Tracking" onerror="this.style.display='none'">
+            <div class="ph-label" style="color:rgba(249,168,37,0.4);"><span>screen-order-tracking.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"500 orders — in-transit, undelivered, payment pending. Built from UAE hospital feedback."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">Order Tracking <span class="text-gray-600 font-normal">· pipeline visibility</span></h4>
+      </div>
+
+      <div class="pe-item">
+        <div class="wire-card aspect-[16/10] bg-[#0e0e1a] border border-white/[0.08] rounded-2xl p-4 mb-3">
+          <div class="ph w-full h-full" style="border:1px dashed rgba(249,168,37,0.12);border-radius:10px;">
+            <img src="assets/screen-grn.png" alt="GRN Tracking" onerror="this.style.display='none'">
+            <div class="ph-label" style="color:rgba(249,168,37,0.4);"><span>screen-grn.png</span></div>
+            <div class="wire-commentary">
+              <span class="text-[9px] font-bold uppercase tracking-widest" style="color:#1EE9B6;">Insight</span>
+              <p class="text-xs text-gray-300 leading-relaxed italic">"52 GRNs this month, ₹39.8L tracked — the loop closed, PO to delivery."</p>
+            </div>
+          </div>
+        </div>
+        <h4 class="text-sm font-semibold text-gray-200">GRN Tracking <span class="text-gray-600 font-normal">· loop closed</span></h4>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ── THE AI ── -->
+<section class="py-20 px-6 bg-[#0c0c12] border-b border-white/[0.06]" id="ai">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="max-w-3xl mb-10" data-anim>
+      <p class="text-[11px] font-bold tracking-widest uppercase text-[#1EE9B6]/60 mb-4">The AI</p>
+      <h2 class="text-3xl md:text-[42px] leading-[1.1] tracking-[-0.5px] mb-4 text-gray-100">The model behind the product</h2>
+      <p class="text-base text-gray-400 leading-relaxed">Hospital demand isn't seasonal — it's irregular and life-critical. That's what made it hard:</p>
+    </div>
+
+    <!-- WHY IT WAS HARD: three demand patterns, small multiples -->
+    <div class="grid md:grid-cols-3 gap-4 mb-14" data-anim>
+      <div class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl p-5">
+        <div class="flex items-baseline justify-between mb-3">
+          <span class="text-[10px] font-bold tracking-widest uppercase text-gray-300">Steady</span>
+          <span class="text-[10px] text-gray-600">e.g. gloves, saline</span>
+        </div>
+        <svg viewBox="0 0 220 60" class="w-full h-14" role="img" aria-label="Steady demand — small regular variation">
+          <path d="M0 34 C15 30, 25 38, 40 34 S 65 30, 80 35 S 105 38, 120 33 S 145 30, 160 35 S 190 37, 205 33 L220 34" fill="none" stroke="#00A87E" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <p class="text-[11px] text-gray-500 mt-3 leading-relaxed">Predictable. Classic forecasting works.</p>
+      </div>
+      <div class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl p-5">
+        <div class="flex items-baseline justify-between mb-3">
+          <span class="text-[10px] font-bold tracking-widest uppercase text-gray-300">Lumpy</span>
+          <span class="text-[10px] text-gray-600">e.g. implants</span>
+        </div>
+        <svg viewBox="0 0 220 60" class="w-full h-14" role="img" aria-label="Lumpy demand — long quiet stretches with tall spikes">
+          <path d="M0 48 L22 48 L28 44 L34 48 L62 48 L68 12 L74 48 L112 48 L120 45 L128 48 L154 48 L160 8 L166 48 L204 48 L220 48" fill="none" stroke="#962EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="text-[11px] text-gray-500 mt-3 leading-relaxed">Quiet, then a spike. Smoothing models miss exactly what matters.</p>
+      </div>
+      <div class="bg-[#0e0e1a] border border-white/[0.07] rounded-2xl p-5">
+        <div class="flex items-baseline justify-between mb-3">
+          <span class="text-[10px] font-bold tracking-widest uppercase text-gray-300">Erratic</span>
+          <span class="text-[10px] text-gray-600">e.g. emergency drugs</span>
+        </div>
+        <svg viewBox="0 0 220 60" class="w-full h-14" role="img" aria-label="Erratic demand — jagged, no pattern">
+          <path d="M0 40 L15 24 L30 44 L45 30 L60 50 L75 18 L90 38 L105 26 L120 46 L135 20 L150 42 L165 32 L180 14 L195 40 L210 28 L220 36" fill="none" stroke="#C77D0A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="text-[11px] text-gray-500 mt-3 leading-relaxed">No pattern at all. Needs per-SKU logic.</p>
+      </div>
+    </div>
+
+    <!-- THREE ITERATIONS: stepper -->
+    <p class="text-[10px] font-bold tracking-widest uppercase text-gray-500 mb-6" data-anim>Three iterations to get it right</p>
+    <div class="grid grid-cols-3 gap-2 md:gap-6 mb-14" data-anim>
+      <div class="step-node text-center px-1">
+        <div class="relative z-10 w-10 h-10 mx-auto rounded-full bg-[#0e0e1a] border border-white/[0.12] flex items-center justify-center mb-3">
+          <span class="text-gray-600 text-sm font-black">✕</span>
+        </div>
+        <h4 class="text-sm md:text-base font-semibold text-gray-500 mb-1" style="font-family:Inter,sans-serif">Prophet</h4>
+        <p class="text-[11px] text-gray-600 leading-relaxed max-w-[180px] mx-auto">Great at seasonality — smoothed away the lumpy spikes that mattered.</p>
+      </div>
+      <div class="step-node text-center px-1">
+        <div class="relative z-10 w-10 h-10 mx-auto rounded-full bg-[#0e0e1a] border border-white/[0.12] flex items-center justify-center mb-3">
+          <span class="text-gray-600 text-sm font-black">✕</span>
+        </div>
+        <h4 class="text-sm md:text-base font-semibold text-gray-500 mb-1" style="font-family:Inter,sans-serif">XGBoost</h4>
+        <p class="text-[11px] text-gray-600 leading-relaxed max-w-[180px] mx-auto">Caught non-linear patterns — couldn't scale across 1,500+ SKUs.</p>
+      </div>
+      <div class="step-node text-center px-1">
+        <div class="relative z-10 w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-3" style="background:rgba(30,233,182,0.12);border:1px solid rgba(30,233,182,0.45);box-shadow:0 0 24px rgba(30,233,182,0.15);">
+          <span class="text-sm font-black" style="color:#1EE9B6">✓</span>
+        </div>
+        <h4 class="text-sm md:text-base font-bold mb-1" style="font-family:Inter,sans-serif;color:#1EE9B6">LightGBM</h4>
+        <p class="text-[11px] text-gray-400 leading-relaxed max-w-[190px] mx-auto">Fast and accurate on sparse, high-cardinality demand. <strong class="text-gray-200">Shipped.</strong></p>
+      </div>
+    </div>
+
+    <!-- WHAT THE MODEL SEES: input → model → output flow -->
+    <p class="text-[10px] font-bold tracking-widest uppercase text-gray-500 mb-6" data-anim>What the model sees → what the hospital gets</p>
+    <div class="grid lg:grid-cols-[1fr_auto_1fr] gap-6 items-center" data-anim>
+
+      <!-- Inputs -->
+      <div class="space-y-3">
+        <div class="flow-chip">
+          <p class="text-xs font-bold text-gray-200 mb-0.5">Demand type</p>
+          <p class="text-[11px] text-gray-500">Steady / Lumpy / Erratic — different logic per pattern</p>
+        </div>
+        <div class="flow-chip">
+          <p class="text-xs font-bold text-gray-200 mb-0.5">Criticality tier</p>
+          <p class="text-[11px] text-gray-500">Life-saving SKUs get zero stockout tolerance</p>
+        </div>
+        <div class="flow-chip">
+          <p class="text-xs font-bold text-gray-200 mb-0.5">Geo layer</p>
+          <p class="text-[11px] text-gray-500">Weather + regional procedure trends — coastal ≠ North ≠ South</p>
+        </div>
+        <div class="flow-chip" style="border-color:rgba(150,46,255,0.3);">
+          <p class="text-xs font-bold mb-0.5" style="color:#c8b4ff">Medikabazaar's multi-year data</p>
+          <p class="text-[11px] text-gray-500">Pre-trained before day one — the moat no competitor could copy</p>
+        </div>
+      </div>
+
+      <!-- Model node -->
+      <div class="flex lg:flex-col items-center justify-center gap-2 py-2">
+        <span class="text-gray-600 text-xl hidden lg:block">→</span>
+        <span class="text-gray-600 text-xl lg:hidden">↓</span>
+        <div class="px-6 py-4 rounded-2xl text-center" style="background:rgba(30,233,182,0.07);border:1px solid rgba(30,233,182,0.35);box-shadow:0 0 30px rgba(30,233,182,0.08);">
+          <p class="text-sm font-black" style="color:#1EE9B6">LightGBM</p>
+          <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">per-SKU forecast</p>
+        </div>
+        <span class="text-gray-600 text-xl hidden lg:block">→</span>
+        <span class="text-gray-600 text-xl lg:hidden">↓</span>
+      </div>
+
+      <!-- Outputs -->
+      <div class="space-y-3">
+        <div class="flow-chip" style="border-color:rgba(30,233,182,0.25);">
+          <p class="text-xs font-bold text-gray-200 mb-0.5">"Order today" list</p>
+          <p class="text-[11px] text-gray-500">What to buy, before the stockout</p>
+        </div>
+        <div class="flow-chip" style="border-color:rgba(30,233,182,0.25);">
+          <p class="text-xs font-bold text-gray-200 mb-0.5">Finishes-in countdown</p>
+          <p class="text-[11px] text-gray-500">Days of stock left, per SKU</p>
+        </div>
+        <div class="flow-chip" style="border-color:rgba(30,233,182,0.25);">
+          <p class="text-xs font-bold text-gray-200 mb-0.5">₹ leakage &amp; savings view</p>
+          <p class="text-[11px] text-gray-500">Expired, dead and over-stocked capital, priced</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ── THE BUSINESS : PRICING + DECISIONS ── -->
+<section class="py-20 px-6 bg-[#0a0a0e] border-b border-white/[0.06]" id="business">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="grid lg:grid-cols-2 gap-14 items-start mb-16">
+
+      <!-- Left: the flywheel -->
+      <div>
+        <p class="text-[11px] font-bold tracking-widest uppercase text-[#962EFF]/60 mb-4" data-anim>The Business</p>
+        <h2 class="text-3xl md:text-[42px] leading-[1.1] tracking-[-0.5px] mb-5 text-gray-100" data-anim>One pricing line that did three jobs</h2>
+        <p class="text-base text-gray-400 mb-8 leading-relaxed" data-anim>The integration fee hospitals expected to be a blocker came back as procurement wallet credit.</p>
+
+        <!-- Flywheel -->
+        <div class="rounded-2xl p-6 mb-6" style="background:#0e0e1a;border:1px solid rgba(255,255,255,0.07);" data-anim>
+          <p class="text-[9px] font-bold tracking-widest uppercase mb-5" style="color:rgba(30,233,182,0.7)">The wallet flywheel</p>
+          <div class="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
+            <span class="px-3 py-2 rounded-xl border border-white/[0.12] bg-white/[0.04] text-gray-300">Integration fee</span>
+            <span class="text-gray-600">→</span>
+            <span class="px-3 py-2 rounded-xl border border-[#1EE9B6]/25 bg-[#1EE9B6]/[0.07]" style="color:#1EE9B6">100% wallet credit → feels like ₹0</span>
+            <span class="text-gray-600">→</span>
+            <span class="px-3 py-2 rounded-xl border border-[#962EFF]/25 bg-[#962EFF]/[0.07]" style="color:#c8b4ff">hospital procures via Medikabazaar → GMV ↑</span>
+            <span class="text-gray-600">→</span>
+            <span class="px-3 py-2 rounded-xl border border-[#F9A825]/25 bg-[#F9A825]/[0.07]" style="color:#F9A825">intelligence + procurement in one ecosystem → lock-in</span>
+            <span class="text-gray-600">↺</span>
+            <span class="text-gray-500 italic">switching costs compound every month</span>
+          </div>
+        </div>
+
+        <!-- Segments -->
+        <div class="flex flex-wrap gap-2" data-anim>
+          <span class="px-3 py-1.5 rounded-full text-[11px] font-semibold" style="border:1px solid rgba(150,46,255,0.25);background:rgba(150,46,255,0.07);color:#c8b4ff">India · Medikabazaar customers</span>
+          <span class="px-3 py-1.5 rounded-full text-[11px] font-semibold" style="border:1px solid rgba(30,233,182,0.22);background:rgba(30,233,182,0.06);color:#1EE9B6">India · Mid-market hospitals</span>
+          <span class="px-3 py-1.5 rounded-full text-[11px] font-semibold" style="border:1px solid rgba(249,168,37,0.22);background:rgba(249,168,37,0.06);color:#F9A825">UAE · Independent clinics</span>
+        </div>
+      </div>
+
+      <!-- Right: pricing card -->
+      <div class="bg-[#0e0e1a] border border-[#962EFF]/25 rounded-2xl p-7 relative" data-anim>
+        <div class="absolute top-5 right-5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest" style="background:rgba(150,46,255,0.12);border:1px solid rgba(150,46,255,0.25);color:#c8b4ff">SaaS Premium</div>
+        <div class="flex items-baseline gap-2 mb-6 mt-2">
+          <span class="text-5xl font-black text-white">₹49,999</span>
+          <span class="text-gray-500 text-sm">/ year</span>
+        </div>
+        <ul class="space-y-3.5 mb-7 border-t border-white/[0.05] pt-6">
+          <li class="flex items-center gap-3 text-sm text-gray-300">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="flex-shrink-0"><circle cx="8" cy="8" r="7" stroke="#1EE9B6" stroke-width="1.3"/><path d="M5 8l2.5 2.5L11 5.5" stroke="#1EE9B6" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Unlimited SKU forecasts + AI indents
+          </li>
+          <li class="flex items-center gap-3 text-sm text-gray-300">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="flex-shrink-0"><circle cx="8" cy="8" r="7" stroke="#1EE9B6" stroke-width="1.3"/><path d="M5 8l2.5 2.5L11 5.5" stroke="#1EE9B6" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Full command center + PO/GRN module
+          </li>
+          <li class="flex items-center gap-3 text-sm text-gray-300 font-semibold">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="flex-shrink-0"><circle cx="8" cy="8" r="7" stroke="#1EE9B6" stroke-width="1.3"/><path d="M5 8l2.5 2.5L11 5.5" stroke="#1EE9B6" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            20%+ guaranteed savings on procurement
+          </li>
+          <li class="flex items-center gap-3 text-sm text-gray-300 font-semibold">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="flex-shrink-0"><circle cx="8" cy="8" r="7" stroke="#1EE9B6" stroke-width="1.3"/><path d="M5 8l2.5 2.5L11 5.5" stroke="#1EE9B6" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            100% wallet credit on integration fee
+          </li>
+        </ul>
+        <div class="ph w-full rounded-xl" style="min-height:150px;">
+          <img src="assets/screen-landing-page.png" alt="MedikaCloud landing page" onerror="this.style.display='none'">
+          <div class="ph-label" style="font-size:10px;"><span>medikacloud.com landing page</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Decisions -->
+    <div class="max-w-3xl">
+      <h3 class="text-2xl md:text-[30px] text-gray-100 mb-2" data-anim>The calls that shaped it</h3>
+      <p class="text-sm text-gray-500 mb-7" data-anim>Sole PM — every call without a safety net. All four paid off.</p>
+
+      <div class="space-y-3" data-anim>
+
+        <div class="acc-item bg-[#0e0e1a] border border-white/[0.07]" data-open>
+          <button class="acc-trigger">
+            <div class="w-7 h-7 rounded-full badge-p flex items-center justify-center text-xs font-black flex-shrink-0">1</div>
+            <p class="acc-title flex-1 text-sm font-semibold text-gray-200 transition-colors">Train on Medikabazaar's own data first</p>
+            <svg class="acc-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-body">
+            <p class="text-sm text-gray-400 leading-relaxed px-6 pb-5">The model learned regional demand from multi-year data before it ever saw a hospital record — a head-start no competitor could replicate quickly.</p>
+          </div>
+        </div>
+
+        <div class="acc-item bg-[#0e0e1a] border border-white/[0.07]">
+          <button class="acc-trigger">
+            <div class="w-7 h-7 rounded-full badge-p flex items-center justify-center text-xs font-black flex-shrink-0">2</div>
+            <p class="acc-title flex-1 text-sm font-semibold text-gray-200 transition-colors">Credit the integration fee to the wallet</p>
+            <svg class="acc-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-body">
+            <p class="text-sm text-gray-400 leading-relaxed px-6 pb-5">Friction down, GMV up, lock-in compounding — three outcomes from one line in the pricing doc.</p>
+          </div>
+        </div>
+
+        <div class="acc-item bg-[#0e0e1a] border border-white/[0.07]">
+          <button class="acc-trigger">
+            <div class="w-7 h-7 rounded-full badge-t flex items-center justify-center text-xs font-black flex-shrink-0">3</div>
+            <p class="acc-title flex-1 text-sm font-semibold text-gray-200 transition-colors">Design for two completely different users</p>
+            <svg class="acc-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-body">
+            <p class="text-sm text-gray-400 leading-relaxed px-6 pb-5">The CXO saw the ₹ savings; the procurement manager saw the SKU table. Same product, two entry points, two wins.</p>
+          </div>
+        </div>
+
+        <div class="acc-item bg-[#0e0e1a] border border-white/[0.07]">
+          <button class="acc-trigger">
+            <div class="w-7 h-7 rounded-full badge-a flex items-center justify-center text-xs font-black flex-shrink-0">4</div>
+            <p class="acc-title flex-1 text-sm font-semibold text-gray-200 transition-colors">Expand scope on user pull, not roadmap</p>
+            <svg class="acc-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="acc-body">
+            <p class="text-sm text-gray-400 leading-relaxed px-6 pb-5">UAE hospitals had no procurement system, so I built the PO/GRN module because they asked. It drove 2 of our 5 paid conversions.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── THE IMPACT ── -->
+<section class="py-20 px-6 bg-[#0c0c12] border-b border-white/[0.06]" id="impact">
+  <div class="max-w-5xl mx-auto">
+    <p class="text-[11px] font-bold tracking-widest uppercase text-[#962EFF]/60 mb-4" data-anim>The Impact</p>
+    <h2 class="text-3xl md:text-[42px] leading-[1.1] tracking-[-0.5px] mb-10 text-gray-100" data-anim>8 months. 12 hospitals. Real numbers.</h2>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="impact-card bg-[#0a0a0e] border border-white/[0.07] rounded-2xl p-5 md:p-6" data-anim data-d="1">
+        <div class="text-[40px] md:text-[46px] font-black leading-none mb-2 glow-p" style="color:#c8b4ff"><span class="counter" data-target="14">0</span>%</div>
+        <div class="text-xs text-gray-400">Reduction in procurement costs</div>
+        <div class="prog-bar"><div class="prog-fill" style="--p:14%;background:linear-gradient(90deg,#962EFF,#c8b4ff);"></div></div>
+      </div>
+      <div class="impact-card bg-[#0a0a0e] border border-white/[0.07] rounded-2xl p-5 md:p-6" data-anim data-d="2">
+        <div class="text-[40px] md:text-[46px] font-black leading-none mb-2 glow-t" style="color:#1EE9B6"><span class="counter" data-target="40">0</span>%</div>
+        <div class="text-xs text-gray-400">Faster fulfillment turnaround</div>
+        <div class="prog-bar"><div class="prog-fill" style="--p:40%;background:linear-gradient(90deg,#1EE9B6,#93ffd8);"></div></div>
+      </div>
+      <div class="impact-card bg-[#0a0a0e] border border-white/[0.07] rounded-2xl p-5 md:p-6" data-anim data-d="3">
+        <div class="text-[40px] md:text-[46px] font-black leading-none mb-2 glow-a" style="color:#F9A825"><span class="counter" data-target="50">0</span>%</div>
+        <div class="text-xs text-gray-400">Pilots converted to paid within 3 months</div>
+        <div class="prog-bar"><div class="prog-fill" style="--p:50%;background:linear-gradient(90deg,#F9A825,#fbbf24);"></div></div>
+      </div>
+      <div class="impact-card bg-[#0a0a0e] border border-white/[0.07] rounded-2xl p-5 md:p-6" data-anim data-d="4">
+        <div class="text-[40px] md:text-[46px] font-black leading-none mb-2 glow-t" style="color:#1EE9B6"><span class="counter" data-target="12">0</span></div>
+        <div class="text-xs text-gray-400">Pilot hospitals onboarded, India + UAE</div>
+        <div class="prog-bar"><div class="prog-fill" style="--p:100%;background:linear-gradient(90deg,#1EE9B6,#962EFF);"></div></div>
+      </div>
+    </div>
+
+    <p class="text-base md:text-lg mt-10 max-w-2xl leading-relaxed" style="font-family:'Instrument Serif',Georgia,serif;font-style:italic;color:#c8b4ff" data-anim>
+      Research to build to GTM to onboarding — one PM, one thread, never dropped.
+    </p>
+  </div>
+</section>
+
+<!-- ── NEXT CASE STUDY ── -->
+<section class="py-16 px-6 bg-[#0c0c12] border-b border-white/[0.06]">
+  <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+    <div>
+      <p class="text-xs text-gray-600 uppercase tracking-widest font-bold mb-1">Next Case Study</p>
+      <h3 class="text-2xl text-gray-100" style="font-family:'Instrument Serif',Georgia,serif;font-weight:400">SensAI Sleep App</h3>
+      <p class="text-sm text-gray-400 mt-1">₹4.5Cr+ revenue in 12 months with AI sleep tracking</p>
+    </div>
+    <a href="/sensai/" class="flex-shrink-0 bg-white text-black text-[14px] font-bold px-6 py-3 rounded-xl hover:bg-gray-100 transition-colors">Read next →</a>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer class="bg-[#07070b] border-t border-white/[0.06] px-6 py-12">
+  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+    <span class="text-xs text-gray-600">© 2025 Sharanya Chaturvedi</span>
+    <div class="flex items-center gap-6 text-xs text-gray-600">
+      <a href="mailto:chaturvedisharanya@gmail.com" class="hover:text-gray-300 transition-colors">Email</a>
+      <a href="https://linkedin.com/in/chaturvedisharanya" target="_blank" rel="noopener noreferrer" class="hover:text-gray-300 transition-colors">LinkedIn</a>
+      <a href="#" class="hover:text-gray-300 transition-colors">Resume (PDF)</a>
+    </div>
+    <span class="text-xs text-gray-600">Built with intention.</span>
+  </div>
+</footer>
+
+<script>
+// ── SCROLL ANIMATIONS ──
+(function () {
+  var els = document.querySelectorAll('[data-anim]');
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  els.forEach(function (el) { obs.observe(el); });
+}());
+
+// ── PRODUCT TABS + SLIDER ARROWS ──
+(function () {
+  var wire = document.getElementById('wire-panel');
+  var live = document.getElementById('live-panel');
+  var tabs = document.querySelectorAll('.tab-btn');
+  var autoTimer = null;
+
+  function activePanel() { return wire.classList.contains('hidden') ? live : wire; }
+
+  function setTab(name) {
+    tabs.forEach(function (t) { t.classList.toggle('on', t.dataset.tab === name); });
+    var showLive = name === 'live';
+    wire.classList.toggle('hidden', showLive);
+    live.classList.toggle('hidden', !showLive);
+  }
+
+  // Manual selection stops the auto-toggle for good
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+      setTab(t.dataset.tab);
+    });
+  });
+
+  // Auto-toggle sketches ↔ live every 3s, starting when the section scrolls into view
+  var section = document.getElementById('product');
+  var startObs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting || autoTimer) return;
+      autoTimer = setInterval(function () {
+        setTab(wire.classList.contains('hidden') ? 'wire' : 'live');
+      }, 3000);
+      startObs.unobserve(e.target);
+    });
+  }, { threshold: 0.3 });
+  if (section) startObs.observe(section);
+
+  var STEP = 300 + 20;
+  function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+  document.getElementById('live-next-btn').addEventListener('click', function () { stopAuto(); activePanel().scrollBy({ left:  STEP, behavior: 'smooth' }); });
+  document.getElementById('live-prev-btn').addEventListener('click', function () { stopAuto(); activePanel().scrollBy({ left: -STEP, behavior: 'smooth' }); });
+}());
+
+// ── ACCORDION ──
+(function () {
+  document.querySelectorAll('.acc-trigger').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var item = btn.closest('.acc-item');
+      var isOpen = item.hasAttribute('data-open');
+      document.querySelectorAll('.acc-item').forEach(function (i) { i.removeAttribute('data-open'); });
+      if (!isOpen) item.setAttribute('data-open', '');
+    });
+  });
+}());
+
+// ── COUNTER ANIMATION ──
+(function () {
+  var counters = document.querySelectorAll('.counter');
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      var el = e.target;
+      var target = parseFloat(el.dataset.target);
+      var duration = 1800;
+      var start = performance.now();
+      function tick(now) {
+        var t = Math.min((now - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = Math.round(target * eased);
+        if (t < 1) requestAnimationFrame(tick); else el.textContent = target;
+      }
+      requestAnimationFrame(tick);
+      obs.unobserve(el);
+    });
+  }, { threshold: 0.3 });
+  counters.forEach(function (c) { obs.observe(c); });
+}());
+
+// ── IMPACT PROGRESS BARS ──
+(function () {
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      setTimeout(function () {
+        e.target.querySelectorAll('.prog-fill').forEach(function (b) { b.classList.add('go'); });
+      }, 300);
+      obs.unobserve(e.target);
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll('.impact-card').forEach(function (el) { obs.observe(el); });
+}());
+
+// ── SCROLL PROGRESS ──
+var pb = document.getElementById('scroll-progress');
+window.addEventListener('scroll', function () {
+  var s = document.documentElement.scrollTop || document.body.scrollTop;
+  var h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  pb.style.transform = 'scaleX(' + (h ? s / h : 0) + ')';
+}, { passive: true });
+
+// ── SCROLLSPY ──
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav-link'));
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      links.forEach(function (l) { l.classList.toggle('active', l.dataset.spy === e.target.id); });
+    });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  ['story', 'product', 'ai', 'business', 'impact'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) obs.observe(el);
+  });
+}());
+
+// ── MOBILE MENU ──
+var hamburger = document.getElementById('hamburger');
+var mobileMenu = document.getElementById('mobile-menu');
+function openMobileMenu()  { hamburger.classList.add('open'); mobileMenu.classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeMobileMenu() { hamburger.classList.remove('open'); mobileMenu.classList.remove('open'); document.body.style.overflow = ''; }
+hamburger.addEventListener('click', openMobileMenu);
+document.getElementById('mobile-close').addEventListener('click', closeMobileMenu);
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMobileMenu(); });
+</script>
+</body>
+</html>
