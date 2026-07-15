@@ -4,6 +4,16 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Case Study: Scaling Field Ops | Sharanya Chaturvedi</title>
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<meta name="description" content="Scaling field ops from WhatsApp to 1,50,000+ jobs at ₹0 platform cost — a routing engine, mobile app and admin dashboard for 100+ technicians. A 0→1 PM case study.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Scaling Field Ops — from WhatsApp to 150k Jobs @ ₹0 Cost">
+<meta property="og:description" content="A routing engine, mobile app and admin dashboard that replaced WhatsApp + Excel for 100+ field technicians. 96.4% completion, 64% cost reduction.">
+<meta property="og:url" content="https://sharanyachaturvedi.com/technician-platform/">
+<meta property="og:image" content="https://sharanyachaturvedi.com/assets/og/og-technician.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
@@ -113,9 +123,13 @@
   #hamburger.open .hline:nth-child(1){transform:translateY(7px) rotate(45deg);}
   #hamburger.open .hline:nth-child(2){opacity:0;transform:scaleX(0);}
   #hamburger.open .hline:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+  /* Cursor glow */
+  #cursor-glow{position:fixed;left:0;top:0;pointer-events:none;z-index:9999;width:280px;height:280px;border-radius:50%;mix-blend-mode:screen;background:radial-gradient(circle,rgba(30,233,182,0.09) 0%,transparent 70%);will-change:transform;transform:translate(-9999px,-9999px);}
 </style>
 </head>
 <body>
+<div id="cursor-glow"></div>
 
 <!-- SCROLL PROGRESS -->
 <div class="fixed top-0 left-0 w-full h-0.5 z-[60]">
@@ -955,6 +969,15 @@ function closeMobileMenu() { hamburger.classList.remove('open'); mobileMenu.clas
 hamburger.addEventListener('click', openMobileMenu);
 document.getElementById('mobile-close').addEventListener('click', closeMobileMenu);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileMenu(); });
+
+// ── Cursor Glow ────────────────────────────────────────────
+(function () {
+  const glow = document.getElementById('cursor-glow');
+  const hw = 140;
+  document.addEventListener('mousemove', e => {
+    glow.style.transform = `translate(${e.clientX - hw}px,${e.clientY - hw}px)`;
+  }, { passive: true });
+})();
 </script>
 <script src="../assets/dm-modal.js" defer></script>
 </body>

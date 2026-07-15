@@ -4,6 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MedikaCloud — Sharanya Chaturvedi</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <meta name="description" content="How 100 hospital interviews became a predictive AI deployed across India and UAE — a 0→1 hospital inventory intelligence platform, built in 8 months as sole PM.">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="MedikaCloud — 100 hospital interviews to a predictive AI">
+  <meta property="og:description" content="0→1 AI forecasting platform for hospital inventory, live across India and UAE. 12 pilot hospitals, 50% converted to paid. A senior PM case study.">
+  <meta property="og:url" content="https://sharanyachaturvedi.com/medikacloud/">
+  <meta property="og:image" content="https://sharanyachaturvedi.com/assets/og/og-medikacloud.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -104,9 +114,13 @@
     .prog-bar { height:3px; border-radius:9999px; background:rgba(255,255,255,0.07); overflow:hidden; margin-top:14px; }
     .prog-fill { height:100%; width:0; border-radius:9999px; transition:width 1.5s cubic-bezier(0.25,1,0.5,1); }
     .prog-fill.go { width:var(--p); }
+
+    /* ── CURSOR GLOW ── */
+    #cursor-glow{position:fixed;left:0;top:0;pointer-events:none;z-index:9999;width:280px;height:280px;border-radius:50%;mix-blend-mode:screen;background:radial-gradient(circle,rgba(150,46,255,0.1) 0%,transparent 70%);will-change:transform;transform:translate(-9999px,-9999px);}
   </style>
 </head>
 <body class="text-white font-sans">
+<div id="cursor-glow"></div>
 
 <!-- SCROLL PROGRESS -->
 <div class="fixed top-0 left-0 w-full h-0.5 z-[60]">
@@ -946,6 +960,15 @@ function closeMobileMenu() { hamburger.classList.remove('open'); mobileMenu.clas
 hamburger.addEventListener('click', openMobileMenu);
 document.getElementById('mobile-close').addEventListener('click', closeMobileMenu);
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMobileMenu(); });
+
+// ── CURSOR GLOW ──
+(function () {
+  var glow = document.getElementById('cursor-glow');
+  var hw = 140;
+  document.addEventListener('mousemove', function (e) {
+    glow.style.transform = 'translate(' + (e.clientX - hw) + 'px,' + (e.clientY - hw) + 'px)';
+  }, { passive: true });
+})();
 </script>
 <script src="../assets/dm-modal.js" defer></script>
 </body>
