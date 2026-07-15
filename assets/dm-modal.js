@@ -7,7 +7,8 @@
                   <script src="../assets/dm-modal.js" defer></script> (case-study pages)
 ══════════════════════════════════════════════════════════════ */
 (function () {
-  var EMAIL = 'chaturvedisharanya@gmail.com';
+  var EMAIL = 'chaturvedisharanya@gmail.com';          // shown in "or email me directly" links
+  var FORM_ID = '805b4aa7ad8864f98f4e6704a33f8d38';    // FormSubmit privacy alias for the same inbox
 
   var css = '\
 #dm-overlay { position:fixed; inset:0; z-index:90; background:rgba(6,6,10,0.8); backdrop-filter:blur(12px); display:none; align-items:center; justify-content:center; padding:16px; }\
@@ -141,7 +142,7 @@ select.dm-input option { background:#0e0e1a; color:#e5e7eb; }\
     function send(form, payload, successMsg) {
       var btn = form.querySelector('.dm-submit');
       btn.disabled = true; btn.textContent = 'Sending…';
-      fetch('https://formsubmit.co/ajax/' + EMAIL, {
+      fetch('https://formsubmit.co/ajax/' + FORM_ID, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload)
